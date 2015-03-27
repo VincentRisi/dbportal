@@ -1,0 +1,43 @@
+project (dbportal)
+
+cmake_minimum_required (VERSION 2.8)
+
+if (UNIX)
+  exec_program (uname OUTPUT_VARIABLE SYSTEM_NAME)
+  set (SYSTEM_NAME "${SYSTEM_NAME}" CACHE INTERNAL "")
+  if (SYSTEM_NAME STREQUAL "Linux")
+    set (LINUX ON)
+    #message ("LINUX detected")
+  elseif (SYSTEM_NAME STREQUAL "FreeBSD")
+    set (FREEBSD ON)
+    #message ("FreeBSD detected")
+  else ()
+    set (AIX ON)
+    #message ("AIX detected")
+  endif ()
+endif ()
+
+if (LINUX)
+  set (switches " -g -fPIC -Wno-write-strings -fpermissive")
+  list (APPEND CMAKE_C_FLAGS "${switches}")
+  list (APPEND CMAKE_CXX_FLAGS "${switches}")
+  string (REPLACE ";" " " CMAKE_C_FLAGS   ${CMAKE_C_FLAGS})
+  string (REPLACE ";" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  set (switches " -pthread")
+  list (APPEND CMAKE_EXE_LINKER_FLAGS "${switches}")
+  list (APPEND CMAKE_MODULE_LINKER_FLAGS "${switches}")
+  list (APPEND CMAKE_SHARED_LINKER_FLAGS "${switches}")
+  string (REPLACE ";" " " CMAKE_EXE_LINKER_FLAGS    ${CMAKE_EXE_LINKER_FLAGS})
+  string (REPLACE ";" " " CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS})
+  string (REPLACE ";" " " CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
+endif ()
+
+set (PORTAL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code)
+find_package (PythonInterp)
+
+add_subdirectory(pocilib)
+add_subdirectory(pocioci)
+add_subdirectory(pocilink)
+add_subdirectory(pocidump)
+
+
