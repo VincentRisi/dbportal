@@ -9,6 +9,7 @@ include_directories (
 set (source
   ${CMAKE_BINARY_DIR}/pocioci/yytok.cpp
   )
+set_source_files_properties(${source} PROPERTIES GENERATED TRUE)
 
 set (cpp_list
   linkmain slink

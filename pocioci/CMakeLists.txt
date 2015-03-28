@@ -14,6 +14,8 @@ set (sqldefOut
   ${BIN_DIR}/yytok.cpp
 )
 
+set_source_files_properties(${sqldefOut} PROPERTIES GENERATED TRUE)
+
 set (sqldefIn      
   ${SRC_DIR}/sqldef.y 
 )

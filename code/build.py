@@ -86,23 +86,29 @@ bottom = '''\
 }
 '''
 STATE_NONE=0;STATE_ENUM=1
+print '%s/sqldef.h' % (BIN_DIR)
 ifile = open('%s/sqldef.h' % (BIN_DIR), 'rt')
 lines = ifile.readlines()
 ifile.close()
 comma = '{'
 state = STATE_NONE
+print '%s/yytok.cpp' % (BIN_DIR)
 ofile = open('%s/yytok.cpp' % (BIN_DIR), 'wt')
 ofile.write(top);
+#print lines
 for line in lines:
   if state == STATE_NONE:
-    if line.find('enum yytokentype {') > 0:
+    if line.find('yytokentype') > 0:
       state = STATE_ENUM
+      print 'enum'
     continue  
   if state == STATE_ENUM:
     if line.find('};') > 0:
+      print 'done'
       break;
   token = line.split()[0][6:]   
-  ofile.write('  %s "%s"\n' % (comma, token))   
-  comma = ','
+  if len(line.split()) > 1:
+    ofile.write('  %s "%s"\n' % (comma, token))   
+    comma = ','
 ofile.write(bottom)
 ofile.close()  
