@@ -20,10 +20,17 @@ set (sqldefIn
   ${SRC_DIR}/sqldef.y 
 )
 
+if (WIN32)
+add_custom_command (OUTPUT ${sqldefOut}
+  COMMAND ${PYTHON_EXECUTABLE} ${SRC_DIR}/build.py ${SRC_DIR} ${BIN_DIR}
+  DEPENDS ${sqldefIn}
+  )
+elseif (LINUX)
 add_custom_command (OUTPUT ${sqldefOut}
   COMMAND ${SRC_DIR}/build.py ${SRC_DIR} ${BIN_DIR}
   DEPENDS ${sqldefIn} 
   )  
+endif ()
 
 add_custom_target (dbportal_sqldef_gen ALL
   DEPENDS ${sqldefOut}

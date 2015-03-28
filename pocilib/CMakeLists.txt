@@ -16,4 +16,16 @@ foreach (name ${cpp_list})
   list (APPEND source ${SRC_DIR}/${name}.cpp)
 endforeach ()
 
+set (h_list
+  addlist binio date dir getargs machine sqlbin sqlcons sqltok xcept xdir xstring xtalloc yyerror
+  )
+
+foreach (name ${cpp_list})
+  list (APPEND source ${SRC_DIR}/${name}.cpp)
+endforeach ()
+
+foreach (name ${h_list})
+  list (APPEND source ${SRC_DIR}/${name}.h)
+endforeach ()
+
 add_library(poci SHARED ${source})
