@@ -1,0 +1,112 @@
+SERVER  @xe
+CONNECT npud00/control
+
+TABLE Large
+  ID            Sequence
+  Name          char(16)
+  PNo           int
+  SNo           int
+  Content       HugeCHAR
+
+KEY Key1 PRIMARY ID
+KEY Key2 UNIQUE  Name PNo SNo
+KEY Key3 Name
+
+PROC Count
+PROC Insert
+PROC Update
+PROC DeleteOne
+PROC SelectOne 
+PROC SelectPlus
+
+PROC List
+OUTPUT (multiple)
+  ID =
+  Name =
+  PNo =
+  SNo =
+  Partial char(50)
+SQLCODE
+  select ID, substr(Content, 1, 50) from Large
+ENDCODE
+
+PROC Max
+OUTPUT (single)
+  ID =
+SQLCODE
+  select max(id) from Large
+ENDCODE 
+
+PROC PMax
+INOUT
+  ID =
+SQLCODE
+  BEGIN
+    select max(id) into :ID from Large;
+  END;
+ENDCODE
+
+PROC NewSub
+INPUT
+  Name =
+  Content =
+OUTPUT (single)
+  ID  =
+  PNo =
+  SNo =
+SQLCODE
+  BEGIN
+    select pno
+         , sno+1 
+      into :PNo
+         , :SNo 
+      from large 
+     where Name = :Name 
+       and rownum = 1 
+     order by pno desc, sno desc;
+    select LargeSeq.NEXTVAL into :ID from dual;
+    insert into Large ( ID
+                      , Name
+                      , PNo
+                      , SNo
+                      , Content
+             ) values ( :ID 
+                      , :Name 
+                      , :PNo 
+                      , :SNo 
+                      , :Content 
+             );  
+  END;
+ENDCODE
+
+PROC NewPrime
+INPUT
+  Name    =
+  Content =
+OUTPUT (single)
+  ID      =
+  PNo     =
+  SNo     =
+SQLCODE
+  BEGIN
+    select pno+1
+         , 1 
+      into :PNo
+         , :SNo 
+      from large where Name = :Name 
+      and rownum = 1 
+      order by pno desc, sno desc;
+    select LargeSeq.NEXTVAL into :ID from dual;
+    insert into Large ( ID
+                      , Name
+                      , PNo
+                      , SNo
+                      , Content
+             ) values ( :ID 
+                      , :Name 
+                      , :PNo 
+                      , :SNo 
+                      , :Content 
+             );
+  END;
+ENDCODE

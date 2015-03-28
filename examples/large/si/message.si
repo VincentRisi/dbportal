@@ -1,0 +1,94 @@
+SERVER  @xe
+CONNECT npud00/control
+
+TABLE Message (null)
+  ID          Sequence
+  QueueID     char(24)
+  Status      tinyint   (None=0 Processed=1)
+  Format      tinyint   (Swift=0, XML=1, FlatFile=2, BatchFile=3)
+  HashCode    char(24)   NULL
+  Type        tinyint   (Normal=0 Test=1) 
+  MessageLen  smallint
+  Content     image(16000)
+  DateCreated date
+  Fred        float(10,4) null
+  Fred2       float(16,6)
+  USId        char(16)
+  TMStamp     timestamp
+
+GRANT DELETE TO PUBLIC
+GRANT INSERT TO PUBLIC
+GRANT SELECT TO PUBLIC
+GRANT UPDATE TO PUBLIC 
+
+KEY Message PRIMARY ID
+KEY KEY01 QueueID
+
+link Queue QueueId DELETE CASCADE
+
+PROC    Insert
+PROC    Update
+PROC    DeleteOne
+PROC    SelectOne 
+PROC    SelectPlus
+PROC    SelectOneUpd
+PROC    Exists 
+PROC    SelectAll
+PROC    Count
+
+PROC ForUpd
+INPUT
+  Id            int
+  QueueID       char(24)
+  Status        tinyint
+OUTPUT (single)
+  Format        tinyint
+  MessageLen    smallint
+  Content       image  (16000) 
+SQL CODE
+   SELECT
+      Format
+     ,MessageLen
+     ,Content
+   FROM
+     Message m
+   WHERE
+          m.ID = :Id
+      AND m.Queueid = :QueueID
+      AND m.Status = :Status
+      for update
+      -- $x(12)
+ENDCODE
+
+PROC Queued
+INPUT 
+  QueueID       char(24)
+  Status        tinyint
+OUTPUT (MULTIPLE)
+  Id            int
+SQL CODE
+   SELECT
+      Id
+   FROM
+     Message m
+   WHERE
+      Queueid = :QueueID AND Status = :Status
+ENDCODE
+
+Proc UpdStat
+INPUT
+  MessageId     int
+  Status        TinyInt
+  USId          char (16)
+SQL CODE
+  Update
+     Message
+  Set
+      Status = :Status
+     ,USId = :USId
+     ,Tmstamp = sysdate
+  where
+    MessageID = :MessageID
+ENDCODE
+
+
