@@ -7,13 +7,10 @@ if (UNIX)
   set (SYSTEM_NAME "${SYSTEM_NAME}" CACHE INTERNAL "")
   if (SYSTEM_NAME STREQUAL "Linux")
     set (LINUX ON)
-    #message ("LINUX detected")
   elseif (SYSTEM_NAME STREQUAL "FreeBSD")
     set (FREEBSD ON)
-    #message ("FreeBSD detected")
   else ()
     set (AIX ON)
-    #message ("AIX detected")
   endif ()
 endif ()
 
@@ -47,12 +44,21 @@ elseif (WIN32)
   string (REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
 endif ()
 
+
 set (PORTAL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code)
+
 find_package (PythonInterp)
 
-add_subdirectory(pocilib)
-add_subdirectory(pocioci)
-add_subdirectory(pocilink)
-add_subdirectory(pocidump)
+include (${CMAKE_SOURCE_DIR}/cmake/dbportal.cmake)
+set (TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
 
+file (MAKE_DIRECTORY 
+  ${TOOLS_DIR}
+  )
 
+add_subdirectory (pocilib)
+add_subdirectory (pocioci)
+add_subdirectory (pocilink)
+add_subdirectory (pocidump)
+add_subdirectory (installs)
+add_subdirectory (examples)

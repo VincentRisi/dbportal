@@ -1,7 +1,7 @@
 project (dbportal_pocioci)
 
-set (BIN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 set (SRC_DIR ${PORTAL_SOURCE_DIR})
+set (BIN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 include_directories (
   ${BIN_DIR}
@@ -51,6 +51,6 @@ foreach (name ${cpp_list})
   list (APPEND source ${SRC_DIR}/${name}.cpp)
 endforeach ()
 
-add_executable(pocioci ${source})
+add_executable (pocioci ${source})
 
 target_link_libraries (pocioci poci)
