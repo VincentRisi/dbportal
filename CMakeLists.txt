@@ -49,12 +49,24 @@ set (PORTAL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code)
 
 find_package (PythonInterp)
 
+set (pocioci  ${CMAKE_BINARY_DIR}/pocioci/pocioci${EXEC_EXT})
+set (pocilink ${CMAKE_BINARY_DIR}/pocilink/pocilink${EXEC_EXT})
+set (pocidump ${CMAKE_BINARY_DIR}/pocilink/pocidump${EXEC_EXT})
+
 include (${CMAKE_SOURCE_DIR}/cmake/dbportal.cmake)
+
 set (TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
+
+if (WIN32)
+  set (EXEC_EXT ".exe")
+else ()
+  set (EXEC_EXT)
+endif()
 
 file (MAKE_DIRECTORY 
   ${TOOLS_DIR}
   )
+
 
 add_subdirectory (pocilib)
 add_subdirectory (pocioci)
