@@ -1440,8 +1440,9 @@ void GenerateCSAdoNet(PYYTable Table)
       "using System.Collections.Generic;\n"
       "using System.Data;\n"
       "\n"
-      "namespace Bbd.Idl2.AnyDb\n"
+      "namespace %s\n"
       "{\n"
+      , Table->Server
       );
   if (Table->noFields > 0)
     GenerateCSTable(Table);
