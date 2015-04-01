@@ -1442,7 +1442,7 @@ void GenerateCSAdoNet(PYYTable Table)
       "\n"
       "namespace %s\n"
       "{\n"
-      , Table->Server
+      , Table->ControlDB
       );
   if (Table->noFields > 0)
     GenerateCSTable(Table);
