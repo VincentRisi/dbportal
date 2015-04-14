@@ -1,12 +1,10 @@
 #ifndef _genProC_h_
 #define _genProC_h_
+#include "machine.h"
 
-#include "sqlbin.h"
-typedef tSqlQuery SqlQuery;
-typedef pSqlQuery PSqlQuery;
-typedef tSqlField SqlField;
-typedef pSqlField PSqlField;
-typedef tSqlToken SqlToken;
-typedef pSqlToken PSqlToken;
+#include "loadso.h"
+#include "getargs.h"
+
+int main(int argc, char *argv[]);
 
 #endif

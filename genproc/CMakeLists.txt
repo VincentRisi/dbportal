@@ -7,6 +7,7 @@ include_directories (
 )
 
 set (source
+  ${SRC_DIR}/loadso.cpp
   ${SRC_DIR}/genproc.cpp
   )
 
