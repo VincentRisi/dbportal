@@ -74,7 +74,7 @@ static void loadInFile(const char *inFileName)
   noProcs = GetUShort(inFile);
   for (i=0; i<noProcs; i++)
   {
-    query.name = GetString(inFile);
+    query.Name = GetString(inFile);
     query.NoFields = GetUShort(inFile);
     query.isSql = query.NoFields & 0x8000;
     query.isFetch = query.NoFields & 0x4000;
@@ -87,7 +87,7 @@ static void loadInFile(const char *inFileName)
       for (j=0; j<query.NoFields; j++)
       {
         PSqlField field = &query.Fields[j];
-        field->name = GetString(inFile);
+        field->Name = GetString(inFile);
         field->CType = GetShort(inFile);
         field->SqlType = GetShort(inFile);
         if (sign == sqldefSign2)
@@ -123,7 +123,7 @@ static void loadInFile(const char *inFileName)
       goto RETURN;
     fseek(inFile, -2L, SEEK_CUR);
     token = (PSqlToken)calloc(sizeof(SqlToken), 1);
-    token->name = GetString(inFile);
+    token->Name = GetString(inFile);
     token->Value = GetString(inFile);
     ADD_TO_LIST(tokens, PSqlToken, token, noTokens, 16);
   }
