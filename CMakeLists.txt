@@ -16,7 +16,7 @@ endif ()
 
 if (LINUX)
   message (STATUS "LINUX")
-  set (switches " -g -fPIC -Wno-write-strings -fpermissive")
+  set (switches " -g -fPIC -Wno-write-strings -fpermissive -O2")
   list (APPEND CMAKE_C_FLAGS "${switches}")
   list (APPEND CMAKE_CXX_FLAGS "${switches}")
   string (REPLACE ";" " " CMAKE_C_FLAGS   ${CMAKE_C_FLAGS})
@@ -51,7 +51,8 @@ find_package (PythonInterp)
 
 set (pocioci  ${CMAKE_BINARY_DIR}/pocioci/pocioci${EXEC_EXT})
 set (pocilink ${CMAKE_BINARY_DIR}/pocilink/pocilink${EXEC_EXT})
-set (pocidump ${CMAKE_BINARY_DIR}/pocilink/pocidump${EXEC_EXT})
+set (pocidump ${CMAKE_BINARY_DIR}/pocidump/pocidump${EXEC_EXT})
+set (genproc  ${CMAKE_BINARY_DIR}/genproc/genproc${EXEC_EXT})
 
 include (${CMAKE_SOURCE_DIR}/cmake/dbportal.cmake)
 
@@ -67,10 +68,10 @@ file (MAKE_DIRECTORY
   ${TOOLS_DIR}
   )
 
-
 add_subdirectory (pocilib)
 add_subdirectory (pocioci)
 add_subdirectory (pocilink)
 add_subdirectory (pocidump)
+add_subdirectory (genproc)
 add_subdirectory (installs)
 add_subdirectory (examples)
