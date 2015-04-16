@@ -1,4 +1,6 @@
 #include "loadso.h"
+#include "sqldef.h"
+#include "global.h"
 
 #define ADD_TO_LIST(POINTER, TYPE, DATA, INDEX, DELTA) do {\
   if (INDEX % DELTA == 0) \
@@ -6,20 +8,16 @@
   POINTER[INDEX++] = DATA; \
   } while(0)
 
-#include "sqldef.h"
-#include "global.h"
-
-ushort sqldefSign     = 0x0C1A;
-ushort sqldefSign2    = 0x0C2A;
-ushort sqldefTailMark = 0xBEEF;
+const ushort sqldefSign     = 0x0C1A;
+const ushort sqldefSign2    = 0x0C2A;
+const ushort sqldefTailMark = 0xBEEF;
 
 int SqlSO::loadInFile(const char *inFileName)
 {
   int result = 0;
   FILE* inFile;
   int fileSize;
-  SqlQuery query;
-  PSqlQuery pQ;
+  PSqlQuery query;
   PSqlToken token;
   ushort i, j, noProcs, sign;
   printf("%-13s: %s\n", "Input", inFileName);
@@ -41,25 +39,26 @@ int SqlSO::loadInFile(const char *inFileName)
     printf("Not a valid SO file!\n");
     goto RETURN;
   }
-  query.ServerNo = addServer(GetString(inFile));
-  query.SchemaNo = addSchema(GetString(inFile));
-  query.TableNo  = addTable(GetString(inFile));
+  server  = GetString(inFile);
+  schema  = GetString(inFile);
+  table   = GetString(inFile);
   noProcs = GetUShort(inFile);
   for (i=0; i<noProcs; i++)
   {
-    query.Name = GetString(inFile);
-    query.NoFields = GetUShort(inFile);
-    query.isSql = query.NoFields & 0x8000;
-    query.isFetch = query.NoFields & 0x4000;
-    query.isMultiFetch = query.NoFields & 0x2000;
-    query.isNullEnabled = query.NoFields & 0x1000;
-    query.NoFields &= 0x0FFF;
-    if (query.NoFields)
+    query = (PSqlQuery) calloc(1, sizeof(SqlQuery));
+    query->Name = GetString(inFile);
+    query->NoFields = GetUShort(inFile);
+    if (query->NoFields & 0x8000) query->isSql = 1;
+    if (query->NoFields & 0x4000) query->isFetch = 1;
+    if (query->NoFields & 0x2000) query->isMultiFetch = 1;
+    if (query->NoFields & 0x1000) query->isNullEnabled = 1;
+    query->NoFields &= 0x0FFF;
+    if (query->NoFields)
     {
-      query.Fields = (PSqlField)calloc(query.NoFields, sizeof(SqlField));
-      for (j=0; j<query.NoFields; j++)
+      query->Fields = (PSqlField) calloc(query->NoFields, sizeof(SqlField));
+      for (j=0; j<query->NoFields; j++)
       {
-        PSqlField field = &query.Fields[j];
+        PSqlField field = &query->Fields[j];
         field->Name = GetString(inFile);
         field->CType = GetShort(inFile);
         field->SqlType = GetShort(inFile);
@@ -82,12 +81,10 @@ int SqlSO::loadInFile(const char *inFileName)
       }
     }
     else
-      query.Fields = 0;
-    query.Size = GetUShort(inFile);
-    query.Command = GetExact(query.Size, inFile);
-    pQ = (PSqlQuery)malloc(sizeof(query));
-    *pQ = query;
-    ADD_TO_LIST(queries, PSqlQuery, pQ, noQueries, 16);
+      query->Fields = 0;
+    query->Size = GetUShort(inFile);
+    query->Command = GetExact(query->Size, inFile);
+    ADD_TO_LIST(queries, PSqlQuery, query, noQueries, 16);
   }
   if (ftell(inFile) < fileSize)
   {
@@ -99,65 +96,17 @@ int SqlSO::loadInFile(const char *inFileName)
     token->Name = GetString(inFile);
     token->Value = GetString(inFile);
     ADD_TO_LIST(tokens, PSqlToken, token, noTokens, 16);
+    printf("%s=%s\n", token->Name, token->Value);
   }
 RETURN:
   if (inFile) fclose(inFile);
   return result;
 }
 
-int SqlSO::addServer(char *name)
-{
-  int n;
-  for (n=0; n<noServers; n++)
-    if ((stricmp(name, servers[n])) == 0)
-    {
-      free(name);
-      return n;
-    }
-  n = noServers;
-  ADD_TO_LIST(servers, char*, name, noServers, 4);
-  return n;
-}
-
-int SqlSO::addSchema(char *name)
-{
-  int n;
-  for (n=0; n<noSchemas; n++)
-    if ((stricmp(name, schemas[n])) == 0)
-      {
-      free(name);
-      return n;
-      }
-  n = noSchemas;
-  ADD_TO_LIST(schemas, char*, name, noSchemas, 4);
-  return n;
-}
-
-int SqlSO::addTable(char *name)
-{
-  int n;
-  for (n=0; n<noTables; n++)
-    if ((stricmp(name, tables[n])) == 0)
-      {
-      free(name);
-      return n;
-      }
-  n = noTables;
-  ADD_TO_LIST(tables, char*, name, noTables, 16);
-  return n;
-}
-
-inline char* _copy(char* target, const char* source, int len)
-{
-  char* result = strncpy(target, source, len-1);
-  target[len-1] = 0;
-  return result;
-}
-
 char* SqlSO::dehash(char* work, int worklen, const char *name)
 {
   int i;
-  _copy(work, name, worklen);
+  inline_copy(work, name, worklen);
   for (i=0; i < (int)strlen(work); i++)
   {
     if (work[i] == '#' || work[i] == '$')
@@ -174,21 +123,22 @@ char* SqlSO::nameExt(char* work, int worklen, const char *path)
   char result[1024];
   FNameSplit(path, dir, fname, ext);
   FNameMerge(result, "", fname, ext);
-  return _copy(work, result, worklen);
+  return inline_copy(work, result, worklen);
 }
 
 char* SqlSO::makeOutName(char* work, int worklen
                        , const char* inFileName
-                       , char* outExt, char* outDir)
+                       , const char* outExt
+                       , const char* outDir)
 {
   char result[1024];
   char dir[1024];
   char ext[1024];
   char fname[1024];
-  FNameSplit(inFileName, outDir, fname, ext);
+  FNameSplit(inFileName, dir, fname, ext);
   if (outDir[0] != 0)   
     FNameMerge(result, outDir, fname, outExt);
   else
     FNameMerge(result, dir, fname, outExt);
-  return _copy(work, result, worklen);
+  return inline_copy(work, result, worklen);
 }

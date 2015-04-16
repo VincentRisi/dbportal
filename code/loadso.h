@@ -18,51 +18,45 @@ struct SqlSO
 {
   int         noQueries;
   int         noTokens;
-  int         noServers;
-  int         noSchemas;
-  int         noTables;
+  pchar       server;
+  pchar       schema;
+  pchar       table;
   PSqlQuery  *queries;
   PSqlToken  *tokens;
-  pchar      *servers;
-  pchar      *schemas;
-  pchar      *tables;
   SqlSO()
   {
     noQueries = 0;
     noTokens = 0;
-    noServers = 0;
-    noSchemas = 0;
-    noTables = 0;
     queries = 0;
     tokens = 0;
-    servers = 0;
-    schemas = 0;
-    tables = 0;
+    server = 0;
+    schema = 0;
+    table = 0;
   }
   ~SqlSO()
   {
     noQueries = 0;
     noTokens = 0;
-    noServers = 0;
-    noSchemas = 0;
-    noTables = 0;
-    realloc(queries, 0);
-    realloc(tokens, 0);
-    realloc(servers, 0);
-    realloc(schemas, 0);
-    realloc(tables, 0);
+    if (queries) 
+      free(queries);
+    if (tokens) 
+      free(tokens);
   }
-  int addServer(char *name);
-  int addSchema(char *name);
-  int addTable(char *name);
   int loadInFile(const  char *name);
   static char* dehash(char* work, int worklen, const char *name);
   static char* nameExt(char* work, int worklen, const char *path);
   static char* makeOutName(char* work, int worklen
                          , const char* inFileName
-                         , char* outExt
-                         , char* outDir);
+                         , const char* outExt
+                         , const char* outDir);
 
 };
+
+inline char* inline_copy(char* target, const char* source, int len)
+{
+  char* result = strncpy(target, source, len-1);
+  target[len-1] = 0;
+  return result;
+}
 
 #endif

@@ -16,7 +16,7 @@ endif ()
 
 if (LINUX)
   message (STATUS "LINUX")
-  set (switches " -g -fPIC -Wno-write-strings -fpermissive -O2")
+  set (switches " -g -fPIC -Wno-write-strings -fpermissive")
   list (APPEND CMAKE_C_FLAGS "${switches}")
   list (APPEND CMAKE_CXX_FLAGS "${switches}")
   string (REPLACE ";" " " CMAKE_C_FLAGS   ${CMAKE_C_FLAGS})
@@ -44,6 +44,7 @@ elseif (WIN32)
   string (REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
 endif ()
 
+message (STATUS ${CMAKE_CXX_FLAGS})
 
 set (PORTAL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code)
 
