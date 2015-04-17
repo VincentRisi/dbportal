@@ -36,7 +36,7 @@ static ARG argtab[] =
 
 #define TABSIZE (sizeof(argtab) / sizeof(ARG))
 
-int BinioVerbose = Verbose;
+int binio_verbose = Verbose;
 
 const int BUFF_LEN = 1024;
 static char* loadFiles(char* buffer, int &len, ushort sign)

@@ -98,7 +98,7 @@ static pSqlBin _SqlBinOpen(pchar aFileName)
   }
   FileSize = fseek(BinFile, 0L, SEEK_END);
   fseek(BinFile, 0L, SEEK_SET);
-  sign = GetUShort(BinFile);
+  sign = getUInt16(BinFile);
 
   if (sign != slinkSignOCI
   &&  sign != slinkSignOCI2
@@ -107,31 +107,31 @@ static pSqlBin _SqlBinOpen(pchar aFileName)
     RC = SqlBinSignErr;
     goto Error;
   }
-  SqlBin->NoServers = GetUShort(BinFile);
+  SqlBin->NoServers = getUInt16(BinFile);
   if((SqlBin->Servers = (char**) calloc(sizeof(pchar), SqlBin->NoServers))==0)
   {
     RC = SqlBinMem2Err;
     goto Error;
   }
   for (i=0; i<SqlBin->NoServers; i++)
-    SqlBin->Servers[i] = GetString(BinFile);
-  SqlBin->NoSchemas = GetUShort(BinFile);
+    SqlBin->Servers[i] = getString(BinFile);
+  SqlBin->NoSchemas = getUInt16(BinFile);
   if((SqlBin->Schemas = (char**) calloc(sizeof(pchar), SqlBin->NoSchemas))==0)
   {
     RC = SqlBinMem3Err;
     goto Error;
   }
   for (i=0; i<SqlBin->NoSchemas; i++)
-    SqlBin->Schemas[i] = GetString(BinFile);
-  SqlBin->NoTables = GetUShort(BinFile);
+    SqlBin->Schemas[i] = getString(BinFile);
+  SqlBin->NoTables = getUInt16(BinFile);
   if((SqlBin->Tables = (char**) calloc(sizeof(pchar), SqlBin->NoTables))==0)
   {
     RC = SqlBinMem4Err;
     goto Error;
   }
   for (i=0; i<SqlBin->NoTables; i++)
-    SqlBin->Tables[i] = GetString(BinFile);
-  SqlBin->NoQueries = GetUShort(BinFile);
+    SqlBin->Tables[i] = getString(BinFile);
+  SqlBin->NoQueries = getUInt16(BinFile);
   if((SqlBin->Queries = (pSqlQuery) calloc(sizeof(tSqlQuery), SqlBin->NoQueries))==0)
   {
     RC = SqlBinMem5Err;
@@ -140,16 +140,16 @@ static pSqlBin _SqlBinOpen(pchar aFileName)
   for (i=0; i<SqlBin->NoQueries; i++)
   {
     pSqlQuery Query      = &SqlBin->Queries[i];
-    Query->Name          = GetString(BinFile);
-    Query->ServerNo      = GetUShort(BinFile);
-    Query->SchemaNo      = GetUShort(BinFile);
+    Query->Name          = getString(BinFile);
+    Query->ServerNo      = getUInt16(BinFile);
+    Query->SchemaNo      = getUInt16(BinFile);
     Query->isSql         = Query->SchemaNo & 0x8000;
     Query->isFetch       = Query->SchemaNo & 0x4000;
     Query->isMultiFetch  = Query->SchemaNo & 0x2000;
     Query->isNullEnabled = Query->SchemaNo & 0x1000;
     Query->SchemaNo     &= 0x0FFF;
-    Query->TableNo       = GetUShort(BinFile);
-    Query->NoFields      = GetUShort(BinFile);
+    Query->TableNo       = getUInt16(BinFile);
+    Query->NoFields      = getUInt16(BinFile);
     if (Query->NoFields > 0)
     {
       if((Query->Fields = (pSqlField) calloc(sizeof(tSqlField), Query->NoFields))==0)
@@ -160,33 +160,33 @@ static pSqlBin _SqlBinOpen(pchar aFileName)
       for (j=0; j<Query->NoFields; j++)
       {
         pSqlField Field  = &Query->Fields[j];
-        Field->Name      = GetString(BinFile);
-        Field->CType     = GetShort(BinFile);
-        Field->SqlType   = GetShort(BinFile);
+        Field->Name      = getString(BinFile);
+        Field->CType     = getInt16(BinFile);
+        Field->SqlType   = getInt16(BinFile);
         if (sign == slinkSignOCI2)
         {
-          Field->Size      = GetULong(BinFile);
-          Field->Offset    = GetULong(BinFile);
-          Field->Precision = GetULong(BinFile);
-          Field->Scale     = GetULong(BinFile);
+          Field->Size      = getUInt32(BinFile);
+          Field->Offset    = getUInt32(BinFile);
+          Field->Precision = getUInt32(BinFile);
+          Field->Scale     = getUInt32(BinFile);
         }
         else
         {
-          Field->Size      = GetUShort(BinFile);
-          Field->Offset    = GetUShort(BinFile);
-          Field->Precision = GetUShort(BinFile);
-          Field->Scale     = GetUShort(BinFile);
+          Field->Size      = getUInt16(BinFile);
+          Field->Offset    = getUInt16(BinFile);
+          Field->Precision = getUInt16(BinFile);
+          Field->Scale     = getUInt16(BinFile);
         }
-        Field->isBind    = GetUShort(BinFile);
-        Field->isDefine  = GetUShort(BinFile);
+        Field->isBind    = getUInt16(BinFile);
+        Field->isDefine  = getUInt16(BinFile);
       }
     }
-    Query->Size    = GetUShort(BinFile);
-    Query->Command = GetExact(Query->Size, BinFile);
+    Query->Size    = getUInt16(BinFile);
+    Query->Command = getExact(Query->Size, BinFile);
   }
   if (ftell(BinFile) < FileSize)
   {
-    SqlBin->NoTokens = GetUShort(BinFile);
+    SqlBin->NoTokens = getUInt16(BinFile);
     if((SqlBin->Tokens = (pSqlToken) calloc(sizeof(tSqlToken), SqlBin->NoTokens))==0)
     {
       RC = SqlBinMem7Err;
@@ -195,8 +195,8 @@ static pSqlBin _SqlBinOpen(pchar aFileName)
     for (i=0; i<SqlBin->NoTokens; i++)
     {
       pSqlToken Token      = &SqlBin->Tokens[i];
-      Token->Name          = GetString(BinFile);
-      Token->Value         = GetString(BinFile);
+      Token->Name          = getString(BinFile);
+      Token->Value         = getString(BinFile);
     }
   }
   goto Return;

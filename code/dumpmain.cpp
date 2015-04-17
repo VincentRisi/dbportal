@@ -52,7 +52,7 @@ void DumpSOFile(pchar InFileName, ushort &slink)
     printf("Not enough memory to buffer file!\n");
   FileSize = fseek(InFile, 0L, SEEK_END);
   fseek(InFile, 0L, SEEK_SET);
-  sign = GetUShort(InFile);
+  sign = getUInt16(InFile);
   if (sign != sqldefSign && sign != sqldefSign2)
   {
     printf("Not a valid SO file!\n");
@@ -60,15 +60,15 @@ void DumpSOFile(pchar InFileName, ushort &slink)
   }
   else if (sign == sqldefSign2) // if anywhere a binary is sign2
     slink = slinkSign2;         // then the whole bin must be sign2
-  printf("Server    : %s\n", GetString(InFile));
-  printf("Schema    : %s\n", GetString(InFile));
-  printf("Table     : %s\n", GetString(InFile));
-  NoProcs = GetUShort(InFile);
+  printf("Server    : %s\n", getString(InFile));
+  printf("Schema    : %s\n", getString(InFile));
+  printf("Table     : %s\n", getString(InFile));
+  NoProcs = getUInt16(InFile);
   printf("NoProcs   : %d\n\n", NoProcs);  
   for (i=0; i<NoProcs; i++)
   {
-    Query.Name = GetString(InFile);
-    Query.NoFields = GetUShort(InFile);
+    Query.Name = getString(InFile);
+    Query.NoFields = getUInt16(InFile);
     Query.isSql = Query.NoFields & 0x8000;
     Query.isFetch = Query.NoFields & 0x4000;
     Query.isMultiFetch = Query.NoFields & 0x2000;
@@ -85,25 +85,25 @@ void DumpSOFile(pchar InFileName, ushort &slink)
       tSqlField Field;
       for (j=0; j<Query.NoFields; j++)
       {
-        Field.Name = GetString(InFile);
-        Field.CType = GetShort(InFile);
-        Field.SqlType = GetShort(InFile);
+        Field.Name = getString(InFile);
+        Field.CType = getInt16(InFile);
+        Field.SqlType = getInt16(InFile);
         if (sign == sqldefSign2)
         {
-          Field.Size = GetULong(InFile);
-          Field.Offset = GetULong(InFile);
-          Field.Precision = GetULong(InFile);
-          Field.Scale = GetULong(InFile);
+          Field.Size = getUInt32(InFile);
+          Field.Offset = getUInt32(InFile);
+          Field.Precision = getUInt32(InFile);
+          Field.Scale = getUInt32(InFile);
         }
         else
         {
-          Field.Size = GetUShort(InFile);
-          Field.Offset = GetUShort(InFile);
-          Field.Precision = GetUShort(InFile);
-          Field.Scale = GetUShort(InFile);
+          Field.Size = getUInt16(InFile);
+          Field.Offset = getUInt16(InFile);
+          Field.Precision = getUInt16(InFile);
+          Field.Scale = getUInt16(InFile);
         }
-        Field.isBind = GetUShort(InFile);
-        Field.isDefine = GetUShort(InFile);
+        Field.isBind = getUInt16(InFile);
+        Field.isDefine = getUInt16(InFile);
         printf(" %2d: %-32s c:%3d s:%3d (%d, %d, %d, %d) %s%s\n"
               , j+1
               , Field.Name
@@ -118,19 +118,19 @@ void DumpSOFile(pchar InFileName, ushort &slink)
               );
       }
     }
-    Query.Size = GetUShort(InFile);
-    Query.Command = GetExact(Query.Size, InFile);
+    Query.Size = getUInt16(InFile);
+    Query.Command = getExact(Query.Size, InFile);
     printf("________________________________________________\n"
            "%s\n"
            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n\n", Query.Command);
   }
   if (ftell(InFile) < FileSize)
   {
-    sign = GetUShort(InFile);
+    sign = getUInt16(InFile);
     if (sign == sqldefTailMark)
       goto Return;
     fseek(InFile, -2L, SEEK_CUR);
-    printf("Token (%s=%s)\n", GetString(InFile), GetString(InFile));
+    printf("Token (%s=%s)\n", getString(InFile), getString(InFile));
   }
 Return:
   if (InFile) fclose(InFile);

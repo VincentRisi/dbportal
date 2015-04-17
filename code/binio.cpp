@@ -7,12 +7,12 @@
 #include "xstring.h"
 #include <stdio.h>
 
-char GetSChar(FILE * binFile)
+char getInt8(FILE * binFile)
 {
   return fgetc(binFile);
 }
 
-pchar GetString(FILE * binFile)
+pchar getString(FILE * binFile)
 {
   int n = fgetc(binFile);
   pchar s = (pchar)calloc(n + 1, 1);
@@ -20,14 +20,14 @@ pchar GetString(FILE * binFile)
   return s;
 }
 
-pchar GetExact(uint16 Len, FILE * binFile)
+pchar getExact(uint16 Len, FILE * binFile)
 {
   pchar s = (pchar)calloc(Len + 1, 1);
   fread(s, 1, Len, binFile);
   return s;
 }
 
-uint16 GetUShort(FILE * binFile)
+uint16 getUInt16(FILE * binFile)
 {
   uint16 u;
   fread(& u, sizeof(uint16), 1, binFile);
@@ -35,7 +35,7 @@ uint16 GetUShort(FILE * binFile)
   return u;
 }
 
-int16 GetShort(FILE * binFile)
+int16 getInt16(FILE * binFile)
 {
   int16 s;
   fread(& s, sizeof(int16), 1, binFile);
@@ -43,7 +43,7 @@ int16 GetShort(FILE * binFile)
   return s;
 }
 
-uint32 GetULong(FILE * binFile)
+uint32 getUInt32(FILE * binFile)
 {
   uint32 u;
   fread(& u, sizeof(uint32), 1, binFile);
@@ -51,7 +51,7 @@ uint32 GetULong(FILE * binFile)
   return u;
 }
 
-int32 GetLong(FILE * binFile)
+int32 getInt32(FILE * binFile)
 {
   int32 s;
   fread(& s, sizeof(int32), 1, binFile);
@@ -59,7 +59,7 @@ int32 GetLong(FILE * binFile)
   return s;
 }
 
-double GetDouble(FILE * binFile)
+double getDouble(FILE * binFile)
 {
   double s;
   fread(& s, sizeof(double), 1, binFile);
@@ -67,77 +67,77 @@ double GetDouble(FILE * binFile)
   return s;
 }
 
-#if defined(WANT_BINIOVERBOSE)
-int BinioVerbose = 0;
-FILE * BinioLogFile = stdout;
+#if defined(WANT_binio_verbose)
+int binio_verbose = 0;
+FILE * binio_log_file = stdout;
 
 #endif
 
-void PutSChar(char c, FILE * binFile)
+void putInt8(char c, FILE * binFile)
 {
   fputc(c, binFile);
-#if defined(WANT_BINIOVERBOSE)
-  if (BinioVerbose) fprintf(BinioLogFile, " %c", c);
+#if defined(WANT_binio_verbose)
+  if (binio_verbose) fprintf(binio_log_file, " %c", c);
 #endif
 }
 
-void PutString(pchar s, FILE * binFile)
+void putString(pchar s, FILE * binFile)
 {
   fputc(strlen(s), binFile);
   fputs(s, binFile);
-#if defined(WANT_BINIOVERBOSE)
-  if (BinioVerbose) fprintf(BinioLogFile, "\n%s", s);
+#if defined(WANT_binio_verbose)
+  if (binio_verbose) fprintf(binio_log_file, "\n%s", s);
 #endif
 }
 
-void PutExact(pchar s, FILE * binFile)
+void putExact(pchar s, FILE * binFile)
 {
   fputs(s, binFile);
-#if defined(WANT_BINIOVERBOSE)
-  if (BinioVerbose) fprintf(BinioLogFile, "%s", s);
+#if defined(WANT_binio_verbose)
+  if (binio_verbose) fprintf(binio_log_file, "%s", s);
 #endif
 }
 
-void PutUShort(uint16 i, FILE * binFile)
+void putUInt16(uint16 i, FILE * binFile)
 {
-#if defined(WANT_BINIOVERBOSE)
-  if (BinioVerbose) fprintf(BinioLogFile, " %hu", i);
+#if defined(WANT_binio_verbose)
+  if (binio_verbose) fprintf(binio_log_file, " %hu", i);
 #endif
   Swap(i, (int)sizeof(i));
   fwrite(& i, sizeof(uint16), 1, binFile);
 }
 
-void PutShort(int16 i, FILE * binFile)
+void putInt16(int16 i, FILE * binFile)
 {
-#if defined(WANT_BINIOVERBOSE)
-  if (BinioVerbose) fprintf(BinioLogFile, " %hd", i);
+#if defined(WANT_binio_verbose)
+  if (binio_verbose) fprintf(binio_log_file, " %hd", i);
 #endif
   Swap(i, (int)sizeof(i));
   fwrite(& i, sizeof(int16), 1, binFile);
 }
 
-void PutULong(uint32 i, FILE * binFile)
+void putUInt32(uint32 i, FILE * binFile)
 {
-#if defined(WANT_BINIOVERBOSE)
-  if (BinioVerbose) fprintf(BinioLogFile, " %u", i);
+#if defined(WANT_binio_verbose)
+  if (binio_verbose) fprintf(binio_log_file, " %u", i);
 #endif
   Swap(i, (int)sizeof(i));
   fwrite(& i, sizeof(uint32), 1, binFile);
 }
 
-void PutLong(int32 i, FILE * binFile)
+void putInt32(int32 i, FILE * binFile)
 {
-#if defined(WANT_BINIOVERBOSE)
-  if (BinioVerbose) fprintf(BinioLogFile, " %d", i);
+#if defined(WANT_binio_verbose)
+  if (binio_verbose) fprintf(binio_log_file, " %d", i);
 #endif
   Swap(i, (int)sizeof(i));
   fwrite(& i, sizeof(int32), 1, binFile);
 }
 
-void PutDouble(double i, FILE * binFile)
+void putDouble(double i, FILE * binFile)
 {
-#if defined(WANT_BINIOVERBOSE)
-  if (BinioVerbose) fprintf(BinioLogFile, " %0.4f", i);
+#if defined(WANT_binio_verbose)
+  if (binio_verbose) fprintf(binio_log_file, " %0.4f", i);
 #endif
   Swap(i, (int)sizeof(i));
   fwrite(& i, sizeof(double), 1, binFile);

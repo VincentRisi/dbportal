@@ -881,7 +881,7 @@ static void CSNetMultiProc(PYYTable Table, PYYProc Proc, const char *FullName)
       switch (Field->Type)
       {
       case ftypeFloat:
-        strcpy(work2, "GetDouble");
+        strcpy(work2, "getDouble");
         break;
       case ftypeInt:
         strcpy(work2, "GetInt32");

@@ -34,26 +34,26 @@ void Swap(T &no, int size)
 #pragma option -wccc -wrch
 #endif
 
-char GetSChar(FILE* BinFile);
-pchar GetString(FILE* BinFile);
-pchar GetExact(ushort Len, FILE* BinFile);
-uint16 GetUShort(FILE* BinFile);
-int16 GetShort(FILE* BinFile);
-uint32 GetULong(FILE* BinFile);
-int32 GetLong(FILE* BinFile);
-double GetDouble(FILE* BinFile);
+char getInt8(FILE* BinFile);
+pchar getString(FILE* BinFile);
+pchar getExact(ushort Len, FILE* BinFile);
+uint16 getUInt16(FILE* BinFile);
+int16 getInt16(FILE* BinFile);
+uint32 getUInt32(FILE* BinFile);
+int32 getInt32(FILE* BinFile);
+double getDouble(FILE* BinFile);
 
-extern int BinioVerbose;   /*  set to 1 in order to display Put.... to stdout */
-extern FILE *BinioLogFile;
+extern int binio_verbose;   /*  set to 1 in order to display Put.... to stdout */
+extern FILE *binio_log_file;
 
-void PutSChar(char c, FILE* BinFile);
-void PutString(pchar s, FILE* BinFile);
-void PutExact(pchar s, FILE* BinFile);
-void PutUShort(uint16 i, FILE* BinFile);
-void PutShort(int16 i, FILE* BinFile);
-void PutULong(uint32 i, FILE* BinFile);
-void PutLong(int32 i, FILE* BinFile);
-void PutDouble(double i, FILE* BinFile);
+void putInt8(char c, FILE* BinFile);
+void putString(pchar s, FILE* BinFile);
+void putExact(pchar s, FILE* BinFile);
+void putUInt16(uint16 i, FILE* BinFile);
+void putInt16(int16 i, FILE* BinFile);
+void putUInt32(uint32 i, FILE* BinFile);
+void putInt32(int32 i, FILE* BinFile);
+void putDouble(double i, FILE* BinFile);
 
 #endif
 

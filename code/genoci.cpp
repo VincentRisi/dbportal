@@ -1502,32 +1502,32 @@ static ushort sqldefTailMark  = 0xBEEF;
 static void GenerateTailField(PYYField Field)
 {
   char work[1];work[0]=0;
-  PutString(Field->Name, BinFile);
+  putString(Field->Name, BinFile);
   if (Field->Alias)
-    PutString(Field->Alias, BinFile);
+    putString(Field->Alias, BinFile);
   else
-    PutString(work, BinFile);
-  PutUShort(Field->Type, BinFile);
-  PutUShort(Field->Length, BinFile);
-  PutUShort(Field->Offset, BinFile);
-  PutUShort(Field->Padding, BinFile);
-  PutUShort(Field->Filler, BinFile);
-  PutUShort(Field->Precision, BinFile);
-  PutUShort(Field->Scale, BinFile);
-  PutUShort(Field->isPrimaryKey, BinFile);
-  PutUShort(Field->isNull, BinFile);
-  PutUShort(Field->isInput, BinFile);
-  PutUShort(Field->isBound, BinFile);
-  PutUShort(Field->isOutput, BinFile);
-  PutUShort(Field->isWork, BinFile);
-  PutUShort(Field->isRowSequence, BinFile);
-  PutUShort(Field->isSequence, BinFile);
+    putString(work, BinFile);
+  putUInt16(Field->Type, BinFile);
+  putUInt16(Field->Length, BinFile);
+  putUInt16(Field->Offset, BinFile);
+  putUInt16(Field->Padding, BinFile);
+  putUInt16(Field->Filler, BinFile);
+  putUInt16(Field->Precision, BinFile);
+  putUInt16(Field->Scale, BinFile);
+  putUInt16(Field->isPrimaryKey, BinFile);
+  putUInt16(Field->isNull, BinFile);
+  putUInt16(Field->isInput, BinFile);
+  putUInt16(Field->isBound, BinFile);
+  putUInt16(Field->isOutput, BinFile);
+  putUInt16(Field->isWork, BinFile);
+  putUInt16(Field->isRowSequence, BinFile);
+  putUInt16(Field->isSequence, BinFile);
 }
 
 static void GenerateTailTable(PYYTable Table)
 {
   ushort i;
-  PutUShort(Table->noFields, BinFile);
+  putUInt16(Table->noFields, BinFile);
   for (i=0; i<Table->noFields; i++)
     GenerateTailField(&Table->Fields[i]);
 }
@@ -1535,10 +1535,10 @@ static void GenerateTailTable(PYYTable Table)
 static void GenerateTailKey(PYYKey Key)
 {
   ushort i;
-  PutString(Key->Name, BinFile);
-  PutUShort(Key->isPrimary, BinFile);
-  PutUShort(Key->isUnique, BinFile);
-  PutUShort(Key->noFields, BinFile);
+  putString(Key->Name, BinFile);
+  putUInt16(Key->isPrimary, BinFile);
+  putUInt16(Key->isUnique, BinFile);
+  putUInt16(Key->noFields, BinFile);
   for (i=0; i<Key->noFields; i++)
     GenerateTailField(&Key->Fields[i]);
 }
@@ -1546,9 +1546,9 @@ static void GenerateTailKey(PYYKey Key)
 static void GenerateTailKeys(PYYTable Table)
 {
   ushort i;
-  PutUShort(Table->hasPrimaryKey, BinFile);
-  PutUShort(Table->PrimaryKey, BinFile);
-  PutUShort(Table->noKeys, BinFile);
+  putUInt16(Table->hasPrimaryKey, BinFile);
+  putUInt16(Table->PrimaryKey, BinFile);
+  putUInt16(Table->noKeys, BinFile);
   for (i=0; i<Table->noKeys; i++)
     GenerateTailKey(&Table->Keys[i]);
 }
@@ -1572,10 +1572,10 @@ void GenerateBinTail(PYYTable Table)
 {
 //  char buf[512];
   char *p=FNameName(Table->InputFileName);
-  PutString(p, BinFile);
+  putString(p, BinFile);
   free(p);
-  PutString(TableToken(Table), BinFile);
-  PutUShort(sqldefTailMark, BinFile);
+  putString(TableToken(Table), BinFile);
+  putUInt16(sqldefTailMark, BinFile);
   GenerateTailTable(Table);
   GenerateTailKeys(Table);
 }
@@ -1665,13 +1665,13 @@ static void GenerateBinTable(PYYTable Table)
       Count += _HasProject(Table->noUpdateProjects, Table->UpdateProjects, Table);
   }
   if (Table->Version2Bin == 1)
-    PutUShort(sqldefSignOCI2, BinFile);
+    putUInt16(sqldefSignOCI2, BinFile);
   else
-    PutUShort(sqldefSignOCI, BinFile);
-  PutString(Table->Server, BinFile);
-  PutString(Table->UserID, BinFile);
-  PutString(Table->Name, BinFile);
-  PutUShort(Count, BinFile);
+    putUInt16(sqldefSignOCI, BinFile);
+  putString(Table->Server, BinFile);
+  putString(Table->UserID, BinFile);
+  putString(Table->Name, BinFile);
+  putUInt16(Count, BinFile);
   GenerateBinProcs(Table);
   GenerateBinTail(Table);
 }
@@ -1775,7 +1775,7 @@ static void GenerateBinProc(PYYTable Table, const char *ProcName,
   if (Table->UnderScore)
     strcat(AB, "_");
   strcat(AB, ProcName);
-  PutString(AB, BinFile);
+  putString(AB, BinFile);
   if (testSeq)
     for (i=0,no=0; i<noFields; i++)
     {
@@ -1788,9 +1788,9 @@ static void GenerateBinProc(PYYTable Table, const char *ProcName,
   else
     no = noFields;
   if (ExtraField)
-    PutUShort((ushort)(no+1), BinFile);
+    putUInt16((ushort)(no+1), BinFile);
   else
-    PutUShort(no, BinFile);
+    putUInt16(no, BinFile);
   for (i=0; i<noFields; i++)
   {
     if (testSeq && Fields[i].isSequence && Fields[i].isPrimaryKey == 0)
@@ -1798,54 +1798,54 @@ static void GenerateBinProc(PYYTable Table, const char *ProcName,
     if (testSeq && Fields[i].isRowSequence)
       continue;
     sprintf(AB, ":%s", Fields[i].Name);
-    PutString(AB, BinFile);
-    PutShort(SQLCFieldType(Fields[i].Type), BinFile);
-    PutUShort(OCIFieldType(Fields[i].Type), BinFile);
+    putString(AB, BinFile);
+    putInt16(SQLCFieldType(Fields[i].Type), BinFile);
+    putUInt16(OCIFieldType(Fields[i].Type), BinFile);
     if (Table->Version2Bin == 1)
     {
       if (Fields[i].Type == ftypeImagePtr)
-        PutULong(0, BinFile);
+        putUInt32(0, BinFile);
       else
-        PutULong(Fields[i].Length, BinFile);
-      PutULong(Fields[i].Offset, BinFile);
-      PutULong(Fields[i].Precision, BinFile);
-      PutULong(Fields[i].Scale, BinFile);
+        putUInt32(Fields[i].Length, BinFile);
+      putUInt32(Fields[i].Offset, BinFile);
+      putUInt32(Fields[i].Precision, BinFile);
+      putUInt32(Fields[i].Scale, BinFile);
     }
     else
     {
       if (Fields[i].Type == ftypeImagePtr)
-        PutUShort(0, BinFile);
+        putUInt16(0, BinFile);
       else
-        PutUShort(Fields[i].Length, BinFile);
-      PutUShort(Fields[i].Offset, BinFile);
-      PutUShort(Fields[i].Precision, BinFile);
-      PutUShort(Fields[i].Scale, BinFile);
+        putUInt16(Fields[i].Length, BinFile);
+      putUInt16(Fields[i].Offset, BinFile);
+      putUInt16(Fields[i].Precision, BinFile);
+      putUInt16(Fields[i].Scale, BinFile);
     }
-    PutUShort(1, BinFile);
-    PutUShort(0, BinFile);
+    putUInt16(1, BinFile);
+    putUInt16(0, BinFile);
   }
   if (ExtraField)
   {
     sprintf(AB, ":%s", ExtraField->Name);
-    PutString(AB, BinFile);
-    PutShort(SQLCFieldType(ExtraField->Type), BinFile);
-    PutUShort(OCIFieldType(ExtraField->Type), BinFile);
+    putString(AB, BinFile);
+    putInt16(SQLCFieldType(ExtraField->Type), BinFile);
+    putUInt16(OCIFieldType(ExtraField->Type), BinFile);
     if (Table->Version2Bin == 1)
     {
-      PutULong(ExtraField->Length, BinFile);
-      PutULong(ExtraField->Offset, BinFile);
-      PutULong(ExtraField->Precision, BinFile);
-      PutULong(ExtraField->Scale, BinFile);
+      putUInt32(ExtraField->Length, BinFile);
+      putUInt32(ExtraField->Offset, BinFile);
+      putUInt32(ExtraField->Precision, BinFile);
+      putUInt32(ExtraField->Scale, BinFile);
     }
     else
     {
-      PutUShort(ExtraField->Length, BinFile);
-      PutUShort(ExtraField->Offset, BinFile);
-      PutUShort(ExtraField->Precision, BinFile);
-      PutUShort(ExtraField->Scale, BinFile);
+      putUInt16(ExtraField->Length, BinFile);
+      putUInt16(ExtraField->Offset, BinFile);
+      putUInt16(ExtraField->Precision, BinFile);
+      putUInt16(ExtraField->Scale, BinFile);
     }
-    PutUShort(1, BinFile);
-    PutUShort(0, BinFile);
+    putUInt16(1, BinFile);
+    putUInt16(0, BinFile);
   }
   if (noFields)
   {
@@ -1890,8 +1890,8 @@ static void GenerateBinProc(PYYTable Table, const char *ProcName,
                 Table->UnderScore ? "_" : "",
                 ProcName);
   }
-  PutUShort(strlen(AB), BinFile);
-  PutExact(AB, BinFile);
+  putUInt16(strlen(AB), BinFile);
+  putExact(AB, BinFile);
   free(AB);
 }
 
@@ -1921,40 +1921,40 @@ static void GenerateBinSelectAll(PYYTable Table, bool ForUpd)
   strcat(AB, "SelectAll");
   if (ForUpd)
     strcat(AB, "Upd");
-  PutString(AB, BinFile);
+  putString(AB, BinFile);
   free(AB);
-  PutUShort((Table->noFields & 0x0FFF)
+  putUInt16((Table->noFields & 0x0FFF)
                              | 0x8000
        | (Table->hasImage || Table->hasLOB? 0 : 0x2000), BinFile);
   AB = (char *)malloc(4096);
   for (i=0; i<Table->noFields; i++)
   {
     sprintf(AB, ":%s", Fields[i].Name);
-    PutString(AB, BinFile);
-    PutShort(SQLCFieldType(Fields[i].Type), BinFile);
-    PutUShort(OCIFieldType(Fields[i].Type), BinFile);
+    putString(AB, BinFile);
+    putInt16(SQLCFieldType(Fields[i].Type), BinFile);
+    putUInt16(OCIFieldType(Fields[i].Type), BinFile);
     if (Table->Version2Bin == 1)
     {
       if (Fields[i].Type == ftypeImagePtr)
-        PutULong(0, BinFile);
+        putUInt32(0, BinFile);
       else
-        PutULong(Fields[i].Length, BinFile);
-      PutULong(Fields[i].Offset, BinFile);
-      PutULong(Fields[i].Precision, BinFile);
-      PutULong(Fields[i].Scale, BinFile);
+        putUInt32(Fields[i].Length, BinFile);
+      putUInt32(Fields[i].Offset, BinFile);
+      putUInt32(Fields[i].Precision, BinFile);
+      putUInt32(Fields[i].Scale, BinFile);
     }
     else
     {
       if (Fields[i].Type == ftypeImagePtr)
-        PutUShort(0, BinFile);
+        putUInt16(0, BinFile);
       else
-        PutUShort(Fields[i].Length, BinFile);
-      PutUShort(Fields[i].Offset, BinFile);
-      PutUShort(Fields[i].Precision, BinFile);
-      PutUShort(Fields[i].Scale, BinFile);
+        putUInt16(Fields[i].Length, BinFile);
+      putUInt16(Fields[i].Offset, BinFile);
+      putUInt16(Fields[i].Precision, BinFile);
+      putUInt16(Fields[i].Scale, BinFile);
     }
-    PutUShort(0, BinFile);
-    PutUShort(1|FieldFlag(Fields[i]), BinFile);
+    putUInt16(0, BinFile);
+    putUInt16(1|FieldFlag(Fields[i]), BinFile);
   }
   pAB = AB;
   pAB += sprintf(pAB, "select");
@@ -1975,8 +1975,8 @@ static void GenerateBinSelectAll(PYYTable Table, bool ForUpd)
   pAB += sprintf(pAB, " from %s", Table->Name);
   if (ForUpd)
     pAB += sprintf(pAB, " for update");
-  PutUShort(strlen(AB), BinFile);
-  PutExact(AB, BinFile);
+  putUInt16(strlen(AB), BinFile);
+  putExact(AB, BinFile);
   free(AB);
 }
 
@@ -1991,9 +1991,9 @@ static void GenerateBinSql(PYYTable Table, PYYProc Proc)
   if (Table->UnderScore)
     strcat(AB, "_");
   strcat(AB, Proc->Name);
-  PutString(AB, BinFile);
+  putString(AB, BinFile);
   free(AB);
-  PutUShort(( (Proc->noBinds & 0x0FFF)
+  putUInt16(( (Proc->noBinds & 0x0FFF)
             | (Proc->isSql   ? 0x8000 : 0)
             | (Proc->isFetch ? 0x4000 : 0)
             | (Proc->isMultiFetch ? 0x2000 : 0)
@@ -2003,38 +2003,38 @@ static void GenerateBinSql(PYYTable Table, PYYProc Proc)
   {
     i = Proc->Binds[j];
     sprintf(AB, ":%s", Fields[i].Name);
-    PutString(AB, BinFile);
-    PutShort(SQLCFieldType(Fields[i].Type), BinFile);
-    PutUShort(OCIFieldType(Fields[i].Type), BinFile);
+    putString(AB, BinFile);
+    putInt16(SQLCFieldType(Fields[i].Type), BinFile);
+    putUInt16(OCIFieldType(Fields[i].Type), BinFile);
     if (Table->Version2Bin == 1)
     {
       if (Fields[i].Type == ftypeImagePtr)
-        PutULong(0, BinFile);
+        putUInt32(0, BinFile);
       else
-        PutULong(Fields[i].Length, BinFile);
-      PutULong(Fields[i].Offset, BinFile);
-      PutULong(Fields[i].Precision, BinFile);
-      PutULong(Fields[i].Scale, BinFile);
+        putUInt32(Fields[i].Length, BinFile);
+      putUInt32(Fields[i].Offset, BinFile);
+      putUInt32(Fields[i].Precision, BinFile);
+      putUInt32(Fields[i].Scale, BinFile);
     }
     else
     {
       if (Fields[i].Type == ftypeImagePtr)
-        PutUShort(0, BinFile);
+        putUInt16(0, BinFile);
       else
-        PutUShort(Fields[i].Length, BinFile);
-      PutUShort(Fields[i].Offset, BinFile);
-      PutUShort(Fields[i].Precision, BinFile);
-      PutUShort(Fields[i].Scale, BinFile);
+        putUInt16(Fields[i].Length, BinFile);
+      putUInt16(Fields[i].Offset, BinFile);
+      putUInt16(Fields[i].Precision, BinFile);
+      putUInt16(Fields[i].Scale, BinFile);
     }
     if (Fields[i].Type == ftypeDynamic)
     {
-      PutUShort(0, BinFile);
-      PutUShort(0, BinFile);
+      putUInt16(0, BinFile);
+      putUInt16(0, BinFile);
     }
     else
     {
-      PutUShort(j<Proc->noOutputs?0:1|FieldFlag(Fields[i]), BinFile);
-      PutUShort(j<Proc->noOutputs?1|FieldFlag(Fields[i]):0, BinFile);
+      putUInt16(j<Proc->noOutputs?0:1|FieldFlag(Fields[i]), BinFile);
+      putUInt16(j<Proc->noOutputs?1|FieldFlag(Fields[i]):0, BinFile);
     }
   }
   free(AB);
@@ -2058,8 +2058,8 @@ static void GenerateBinSql(PYYTable Table, PYYProc Proc)
              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
              "0123456789_#$", AB[i-3]) == 0))
     AB[++i] = ';';
-  PutUShort(strlen(AB), BinFile);
-  PutExact(AB, BinFile);
+  putUInt16(strlen(AB), BinFile);
+  putExact(AB, BinFile);
   free(AB);
 }
 

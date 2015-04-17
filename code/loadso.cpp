@@ -32,22 +32,22 @@ int SqlSO::loadInFile(const char *inFileName)
     printf("Not enough memory to buffer file!\n");
   fileSize = fseek(inFile, 0L, SEEK_END);
   fseek(inFile, 0L, SEEK_SET);
-  sign = GetUShort(inFile);
+  sign = getUInt16(inFile);
   if (sign != sqldefSign && sign != sqldefSign2)
   {
     result = 2;
     printf("Not a valid SO file!\n");
     goto RETURN;
   }
-  server  = GetString(inFile);
-  schema  = GetString(inFile);
-  table   = GetString(inFile);
-  noProcs = GetUShort(inFile);
+  server  = getString(inFile);
+  schema  = getString(inFile);
+  table   = getString(inFile);
+  noProcs = getUInt16(inFile);
   for (i=0; i<noProcs; i++)
   {
     query = (PSqlQuery) calloc(1, sizeof(SqlQuery));
-    query->Name = GetString(inFile);
-    query->NoFields = GetUShort(inFile);
+    query->Name = getString(inFile);
+    query->NoFields = getUInt16(inFile);
     if (query->NoFields & 0x8000) query->isSql = 1;
     if (query->NoFields & 0x4000) query->isFetch = 1;
     if (query->NoFields & 0x2000) query->isMultiFetch = 1;
@@ -59,42 +59,42 @@ int SqlSO::loadInFile(const char *inFileName)
       for (j=0; j<query->NoFields; j++)
       {
         PSqlField field = &query->Fields[j];
-        field->Name = GetString(inFile);
-        field->CType = GetShort(inFile);
-        field->SqlType = GetShort(inFile);
+        field->Name = getString(inFile);
+        field->CType = getInt16(inFile);
+        field->SqlType = getInt16(inFile);
         if (sign == sqldefSign2)
         {
-          field->Size = GetULong(inFile);
-          field->Offset = GetULong(inFile);
-          field->Precision = GetULong(inFile);
-          field->Scale = GetULong(inFile);
+          field->Size = getUInt32(inFile);
+          field->Offset = getUInt32(inFile);
+          field->Precision = getUInt32(inFile);
+          field->Scale = getUInt32(inFile);
         }
         else
         {
-          field->Size = GetUShort(inFile);
-          field->Offset = GetUShort(inFile);
-          field->Precision = GetUShort(inFile);
-          field->Scale = GetUShort(inFile);
+          field->Size = getUInt16(inFile);
+          field->Offset = getUInt16(inFile);
+          field->Precision = getUInt16(inFile);
+          field->Scale = getUInt16(inFile);
         }
-        field->isBind = GetUShort(inFile);
-        field->isDefine = GetUShort(inFile);
+        field->isBind = getUInt16(inFile);
+        field->isDefine = getUInt16(inFile);
       }
     }
     else
       query->Fields = 0;
-    query->Size = GetUShort(inFile);
-    query->Command = GetExact(query->Size, inFile);
+    query->Size = getUInt16(inFile);
+    query->Command = getExact(query->Size, inFile);
     ADD_TO_LIST(queries, PSqlQuery, query, noQueries, 16);
   }
   if (ftell(inFile) < fileSize)
   {
-    sign = GetUShort(inFile);
+    sign = getUInt16(inFile);
     if (sign == sqldefTailMark)
       goto RETURN;
     fseek(inFile, -2L, SEEK_CUR);
     token = (PSqlToken)calloc(sizeof(SqlToken), 1);
-    token->Name = GetString(inFile);
-    token->Value = GetString(inFile);
+    token->Name = getString(inFile);
+    token->Value = getString(inFile);
     ADD_TO_LIST(tokens, PSqlToken, token, noTokens, 16);
     printf("%s=%s\n", token->Name, token->Value);
   }
