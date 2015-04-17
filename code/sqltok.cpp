@@ -1,9 +1,4 @@
 
-#include "machine.h"
-
-//#include <ctype.h>
-#include <string.h>
-
 #include "sqltok.h"
 
 #define sqltokALPHA "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

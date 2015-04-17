@@ -1,5 +1,6 @@
 #include "genproc.h"
 #include <string.h>
+#include "sqlcons.h"
 
 static const char* outDirName = "";
 static const char* inListName = "";
@@ -23,7 +24,7 @@ struct AutoXdir
   char* ext;
   AutoXdir(char* path)
   {
-    name = FNameName(path);
+    name = FNameName(path);    
     dir  = FNameDir(path);
     ext  = FNameExt(path);
   }
@@ -38,41 +39,54 @@ struct AutoXdir
 static void doStructField(FILE* ofile, PSqlField field)
 {
   char type[32];
+  char *name = field->Name+1;
   switch (field->CType)
   {
   case SQL_C_BINARY:
-    break;
-  case SQL_C_BIT:
+    fprintf(ofile, "  unsigned char %s[%hu];\n", name, field->Size);
     break;
   case SQL_C_CHAR:
-    break;
   case SQL_C_DATE:
+  case SQL_C_TIME:
+  case SQL_C_TIMESTAMP:
+    fprintf(ofile, "  char %s[%hu];\n", name, field->Size);
     break;
   case SQL_C_DOUBLE:
-    break;
   case SQL_C_FLOAT:
-    break;
-  case SQL_C_LONG:
+    fprintf(ofile, "  double %s;\n", name);
     break;
   case SQL_C_LONG64:
+    fprintf(ofile, "  long long %s;\n", name);
+    break;
+  case SQL_C_LONG:
+    fprintf(ofile, "  int %s;\n", name);
     break;
   case SQL_C_SHORT:
-    break;
-  case SQL_C_TIME:
-    break;
-  case SQL_C_TIMESTAMP:
+    fprintf(ofile, "  short int %s;\n", name);
     break;
   case SQL_C_TINYINT:
+  case SQL_C_BIT:
+    fprintf(ofile, "  char %s;\n", name);
     break;
   case SQL_C_CLIMAGE:
+    fprintf(ofile, "  struct {short int len;unsigned char data[%u];} %s;\n"
+                 , field->Size-2, name);
     break;
   case SQL_C_BLIMAGE:
+    fprintf(ofile, "  struct {int len;unsigned char data[%u];} %s;\n"
+                 , field->Size-4, name);
     break;
   case SQL_C_ZLIMAGE:
+    fprintf(ofile, "  // SQL_C_ZLIMAGE} %s;\n", name);
     break;
   case SQL_C_HUGECHAR:
+    fprintf(ofile, "  // SQL_C_HUGECHAR} %s;\n", name);
     break;
   case SQL_C_XMLTYPE:
+    fprintf(ofile, "  // SQL_C_XMLTYPE} %s;\n", name);
+    break;
+  default:  
+    fprintf(ofile, "  // %04x %s;\n", (unsigned)field->CType, name);
     break;
   }
 }
@@ -83,6 +97,7 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query)
   fprintf(ofile, "typedef struct\n");
   fprintf(ofile, "{\n");
   bool useInds = false;
+  bool hasDynamic = false;
   for (t=0; t<query->NoFields; t++)
   {
     PSqlField field = &query->Fields[t];
@@ -91,6 +106,11 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query)
       useInds = true;
     if (field->isBind|field->isDefine)
       doStructField(ofile, field);
+    else
+    {
+      hasDynamic = true;
+      fprintf(ofile, "  char %s[%hu]; //DYN\n", field->Name+1, field->Size+1);
+    }
   }
   if (query->isNullEnabled && useInds == true)
   {
@@ -108,6 +128,23 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query)
     fprintf(ofile, "  } null;\n");
   }
   fprintf(ofile, "} %sRec;\n\n", query->Name);
+  if (hasDynamic == false)
+    return;
+  fprintf(ofile, "inline char* DYNAMIC(%sRec &rec, const char* name)\n{\n"
+               , query->Name
+                 );
+  for (t=0; t<query->NoFields; t++)
+  {
+    PSqlField field = &query->Fields[t];
+    if (field->isBind|field->isDefine)
+      continue;
+    fprintf(ofile, "  if ((strcmp(name, \"%s\")) == 0)\n"
+                   "    return rec.%s;\n"
+                 , field->Name+1, field->Name+1
+                 );
+  }
+  fprintf(ofile, "  return \"\";\n"
+                 "}\n\n");
 }
 
 static int doHeader(SqlSO& sqlSO, const char* inName)
@@ -129,6 +166,11 @@ static int doHeader(SqlSO& sqlSO, const char* inName)
   return result;
 }
 
+static void doQueryCode(FILE* ofile, PSqlQuery query)
+{
+
+}
+
 static int doCode(SqlSO& sqlSO, const char* inName)
 {
   int result = COMPLETED_OK;
@@ -140,6 +182,7 @@ static int doCode(SqlSO& sqlSO, const char* inName)
   for (int q = 0; q < sqlSO.noQueries; q++)
   {
     PSqlQuery query = sqlSO.queries[q];
+    doQueryCode(ofile, query);
   }
   fclose(ofile);
   return result;
@@ -164,6 +207,8 @@ static int generate(const char* inName)
 static int generateInList(const char* inListName)
 {
   int result = COMPLETED_OK;
+  if (inListName[0] == 0)
+    return result;
   char buff[8192], fileName[1024], *pb;
   const char* ws;
   FILE* inList = fopen(inListName, "rt");
