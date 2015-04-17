@@ -93,14 +93,14 @@ static void doStructField(FILE* ofile, PSqlField field)
 
 static void doQueryStructs(FILE* ofile, PSqlQuery query)
 {
-  int t;
+  int f;
   fprintf(ofile, "typedef struct\n");
   fprintf(ofile, "{\n");
   bool useInds = false;
   bool hasDynamic = false;
-  for (t=0; t<query->NoFields; t++)
+  for (f=0; f<query->NoFields; f++)
   {
-    PSqlField field = &query->Fields[t];
+    PSqlField field = &query->Fields[f];
     if (((field->isBind|field->isDefine) & fieldIsNullable)
     &&  ((field->isBind|field->isDefine) & fieldIsNull))
       useInds = true;
@@ -116,9 +116,9 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query)
   {
     fprintf(ofile, "  struct\n");
     fprintf(ofile, "  {\n");
-    for (t=0; t<query->NoFields; t++)
+    for (f=0; f<query->NoFields; f++)
     {
-      PSqlField field = &query->Fields[t];
+      PSqlField field = &query->Fields[f];
       if (((field->isBind|field->isDefine) & fieldIsNullable)
       &&  ((field->isBind|field->isDefine) & fieldIsNull))
         fprintf(ofile, "    unsigned short %s;\n"
@@ -133,9 +133,9 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query)
   fprintf(ofile, "inline char* DYNAMIC(%sRec &rec, const char* name)\n{\n"
                , query->Name
                  );
-  for (t=0; t<query->NoFields; t++)
+  for (f=0; f<query->NoFields; f++)
   {
-    PSqlField field = &query->Fields[t];
+    PSqlField field = &query->Fields[f];
     if (field->isBind|field->isDefine)
       continue;
     fprintf(ofile, "  if ((strcmp(name, \"%s\")) == 0)\n"
@@ -168,7 +168,19 @@ static int doHeader(SqlSO& sqlSO, const char* inName)
 
 static void doQueryCode(FILE* ofile, PSqlQuery query)
 {
-
+  int f;
+  bool useInds = false;
+  bool hasDynamic = false;
+  for (f=0; f<query->NoFields; f++)
+  {
+    PSqlField field = &query->Fields[f];
+    if (((field->isBind|field->isDefine) & fieldIsNullable)
+    &&  ((field->isBind|field->isDefine) & fieldIsNull))
+      useInds = true;
+    if (field->isBind|field->isDefine)
+      continue;
+    hasDynamic = true;
+  }
 }
 
 static int doCode(SqlSO& sqlSO, const char* inName)
