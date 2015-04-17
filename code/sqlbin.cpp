@@ -48,13 +48,13 @@ static char * Errors[] =
 , "Token not found!"
 };
 
-static int SearchComp(const pchar p1, pSqlQuery p2);
-static int SearchComp2(const pchar p1, pSqlToken p2);
-static tSqlBin ABNSqlBin;
+static int SearchComp(const pchar p1, PSqlQuery p2);
+static int SearchComp2(const pchar p1, PSqlToken p2);
+static TSqlBin ABNSqlBin;
 
-static pSqlBin _SqlBinOpen(pchar InFileName);
+static PSqlBin _SqlBinOpen(pchar InFileName);
 
-int APPLAPI SqlBinOpen(pSqlBin *SqlBin, pchar InFileName)
+int APPLAPI SqlBinOpen(PSqlBin *SqlBin, pchar InFileName)
 {
   *SqlBin = _SqlBinOpen(InFileName);
   return (*SqlBin)->Error;
@@ -64,25 +64,25 @@ static ushort slinkSignOCI   = 0x0C1B;
 static ushort slinkSignOCI2  = 0x0C2B;
 static ushort slinkSignODBC  = 0x0DBB;
 
-static pSqlBin _SqlBinOpen(pchar aFileName)
+static PSqlBin _SqlBinOpen(pchar aFileName)
 {
   ushort i,j, sign;
   int RC=SqlBinOK;
   FILE *BinFile=0;
   char InFileName[DIRMAX_PATH];
-  pSqlBin SqlBin;
+  PSqlBin SqlBin;
   int FileSize;
 
   strncpy(InFileName, aFileName, sizeof(InFileName)-1);
   InFileName[sizeof(InFileName)-1];
-  SqlBin = (pSqlBin) malloc(sizeof(tSqlBin));
+  SqlBin = (PSqlBin) malloc(sizeof(TSqlBin));
   if (SqlBin == 0)
   {
     SqlBin = &ABNSqlBin;
     RC = SqlBinMem0Err;
     goto Error;
   }
-  memset(SqlBin,0,sizeof(tSqlBin));
+  memset(SqlBin,0,sizeof(TSqlBin));
   BinFile = fopen(InFileName, "rb");
   if (BinFile == 0)
   {
@@ -132,14 +132,14 @@ static pSqlBin _SqlBinOpen(pchar aFileName)
   for (i=0; i<SqlBin->NoTables; i++)
     SqlBin->Tables[i] = getString(BinFile);
   SqlBin->NoQueries = getUInt16(BinFile);
-  if((SqlBin->Queries = (pSqlQuery) calloc(sizeof(tSqlQuery), SqlBin->NoQueries))==0)
+  if((SqlBin->Queries = (PSqlQuery) calloc(sizeof(TSqlQuery), SqlBin->NoQueries))==0)
   {
     RC = SqlBinMem5Err;
     goto Error;
   }
   for (i=0; i<SqlBin->NoQueries; i++)
   {
-    pSqlQuery Query      = &SqlBin->Queries[i];
+    PSqlQuery Query      = &SqlBin->Queries[i];
     Query->Name          = getString(BinFile);
     Query->ServerNo      = getUInt16(BinFile);
     Query->SchemaNo      = getUInt16(BinFile);
@@ -152,14 +152,14 @@ static pSqlBin _SqlBinOpen(pchar aFileName)
     Query->NoFields      = getUInt16(BinFile);
     if (Query->NoFields > 0)
     {
-      if((Query->Fields = (pSqlField) calloc(sizeof(tSqlField), Query->NoFields))==0)
+      if((Query->Fields = (PSqlField) calloc(sizeof(TSqlField), Query->NoFields))==0)
       {
         RC = SqlBinMem6Err;
         goto Error;
       }
       for (j=0; j<Query->NoFields; j++)
       {
-        pSqlField Field  = &Query->Fields[j];
+        PSqlField Field  = &Query->Fields[j];
         Field->Name      = getString(BinFile);
         Field->CType     = getInt16(BinFile);
         Field->SqlType   = getInt16(BinFile);
@@ -187,14 +187,14 @@ static pSqlBin _SqlBinOpen(pchar aFileName)
   if (ftell(BinFile) < FileSize)
   {
     SqlBin->NoTokens = getUInt16(BinFile);
-    if((SqlBin->Tokens = (pSqlToken) calloc(sizeof(tSqlToken), SqlBin->NoTokens))==0)
+    if((SqlBin->Tokens = (PSqlToken) calloc(sizeof(TSqlToken), SqlBin->NoTokens))==0)
     {
       RC = SqlBinMem7Err;
       goto Error;
     }
     for (i=0; i<SqlBin->NoTokens; i++)
     {
-      pSqlToken Token      = &SqlBin->Tokens[i];
+      PSqlToken Token      = &SqlBin->Tokens[i];
       Token->Name          = getString(BinFile);
       Token->Value         = getString(BinFile);
     }
@@ -212,10 +212,10 @@ Return:
 }
 
 typedef int (*fptr)(const void*, const void*);
-int APPLAPI SqlBinQuery(pSqlBin SqlBin, pSqlQuery *SqlQuery, pchar FileName)
+int APPLAPI SqlBinQuery(PSqlBin SqlBin, PSqlQuery *SqlQuery, pchar FileName)
 {
-  *SqlQuery = (pSqlQuery) bsearch(FileName, SqlBin->Queries,
-               SqlBin->NoQueries, sizeof(tSqlQuery),
+  *SqlQuery = (PSqlQuery) bsearch(FileName, SqlBin->Queries,
+               SqlBin->NoQueries, sizeof(TSqlQuery),
                (fptr)SearchComp);
   if (*SqlQuery)
     SqlBin->Error = SqlBinOK;
@@ -225,10 +225,10 @@ int APPLAPI SqlBinQuery(pSqlBin SqlBin, pSqlQuery *SqlQuery, pchar FileName)
   return SqlBin->Error;
 }
 
-int APPLAPI SqlBinToken(pSqlBin SqlBin, pSqlToken *SqlToken, pchar FileName)
+int APPLAPI SqlBinToken(PSqlBin SqlBin, PSqlToken *SqlToken, pchar FileName)
 {
-  *SqlToken = (pSqlToken) bsearch(FileName, SqlBin->Tokens,
-               SqlBin->NoTokens, sizeof(tSqlToken),
+  *SqlToken = (PSqlToken) bsearch(FileName, SqlBin->Tokens,
+               SqlBin->NoTokens, sizeof(TSqlToken),
                (fptr)SearchComp2);
   if (*SqlToken)
     SqlBin->Error = SqlBinOK;
@@ -238,7 +238,7 @@ int APPLAPI SqlBinToken(pSqlBin SqlBin, pSqlToken *SqlToken, pchar FileName)
   return SqlBin->Error;
 }
 
-int APPLAPI SqlBinClose(pSqlBin SqlBin)
+int APPLAPI SqlBinClose(PSqlBin SqlBin)
 {
   ushort i, j;
 
@@ -251,7 +251,7 @@ int APPLAPI SqlBinClose(pSqlBin SqlBin)
     {
       for (i=0; i<SqlBin->NoTokens; i++)
       {
-        pSqlToken Token = &SqlBin->Tokens[i];
+        PSqlToken Token = &SqlBin->Tokens[i];
         if (Token->Name)
         {
           free(Token->Name);
@@ -270,7 +270,7 @@ int APPLAPI SqlBinClose(pSqlBin SqlBin)
     {
       for (i=0; i<SqlBin->NoQueries; i++)
       {
-        pSqlQuery Query = &SqlBin->Queries[i];
+        PSqlQuery Query = &SqlBin->Queries[i];
         if (Query->Name)
         {
           free(Query->Name);
@@ -280,7 +280,7 @@ int APPLAPI SqlBinClose(pSqlBin SqlBin)
         {
           for (j=0; j<Query->NoFields; j++)
           {
-            pSqlField Field = &Query->Fields[j];
+            PSqlField Field = &Query->Fields[j];
             if (Field->Name)
             {
               free(Field->Name);
@@ -349,13 +349,13 @@ int APPLAPI SqlBinClose(pSqlBin SqlBin)
   return SqlBinOK;
 }
 
-static int SearchComp(const pchar p1, pSqlQuery p2)
+static int SearchComp(const pchar p1, PSqlQuery p2)
 {
   int n = strlen(p1) > strlen(p2->Name) ? strlen(p2->Name) : strlen(p1);
   return strnicmp(p1, p2->Name, n+1);
 }
 
-static int SearchComp2(const pchar p1, pSqlToken p2)
+static int SearchComp2(const pchar p1, PSqlToken p2)
 {
   int n = strlen(p1) > strlen(p2->Name) ? strlen(p2->Name) : strlen(p1);
   return strnicmp(p1, p2->Name, n+1);

@@ -55,7 +55,7 @@ void PortalExtract::Extract(const void           *portalStruct,
                             AppendList<MapField> *Fields)
 {
    MapField          mapField;
-   tSqlQuery        *sqlQuery;
+   TSqlQuery        *sqlQuery;
    unsigned short    index;
 
    if (SqlBinQuery(m_DBConnect.CB()->SqlBin, &sqlQuery, (char *) SqlQuery))
@@ -106,7 +106,7 @@ void PortalExtract::Fill(void                       *portalStruct,
                          const char                 *SqlQuery,
                          const AppendList<MapField> *Fields)
 {
-   tSqlQuery        *sqlQuery;
+   TSqlQuery        *sqlQuery;
    unsigned short    index;
    unsigned          field_index;
    MapField         *map;

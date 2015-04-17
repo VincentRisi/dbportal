@@ -10,9 +10,8 @@
 #include "binio.h"
 #include "sqlbin.h"
 
-typedef pSqlQuery PSqlQuery;
-typedef pSqlField PSqlField;
-typedef pSqlToken PSqlToken;
+typedef PSqlQuery PSqlQuery;
+typedef PSqlField PSqlField;
 
 struct SqlSO
 {

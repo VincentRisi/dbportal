@@ -54,10 +54,10 @@ protected:
 public:
   static tDBConnect *connect;
   static tDBConnect *singleton(const char *aBinFile, const char *aLogonString);
-  pSqlCB SqlCB;
+  PSqlCB SqlCB;
   tDBConnect();
   ~tDBConnect();
-  pSqlCB CB() { return SqlCB; }
+  PSqlCB CB() { return SqlCB; }
   void SetTimeout(int seconds) {SqlCB->timeout = seconds;}
   void Commit();
   void Logoff();
@@ -87,7 +87,7 @@ CLASSDEF(DBQuery);
 class tDBQuery
 {
 protected:
-  pSqlCursor SqlCursor;
+  PSqlCursor SqlCursor;
   pchar ErrorMsg();
 public:
   tDBQuery(tDBConnect& aDBConnect, pchar aQuery, void* aData=0);

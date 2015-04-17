@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
     fprintf(LogFile, "Loading in SO: %s\n", argv[i]);
     LoadInFile(argv[i], sign);
   }
-  qsort(Queries, NoQueries, sizeof(pSqlQuery), (fptr)SortComp);
+  qsort(Queries, NoQueries, sizeof(PSqlQuery), (fptr)SortComp);
   StoreBinFile(sign);
   fprintf(LogFile, "Done\n");
   LogFile = 0;

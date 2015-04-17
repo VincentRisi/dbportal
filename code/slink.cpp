@@ -15,10 +15,10 @@
   } while(0)
 
 ushort     NoQueries = 0;
-pSqlQuery *Queries = 0;
+PSqlQuery *Queries = 0;
 
 static ushort      NoTokens = 0;
-static pSqlToken  *Tokens;
+static PSqlToken  *Tokens;
 static ushort      NoServers = 0;
 static pchar      *Servers;
 static ushort      NoSchemas = 0;
@@ -31,9 +31,9 @@ static FILE *BinFile     = 0;
 static ushort AddServer(char *Name);
 static ushort AddSchema(char *Name);
 static ushort AddTable(char *Name);
-static void   AddQuery(tSqlQuery Query);
+static void   AddQuery(TSqlQuery Query);
 
-int SortComp(const pSqlQuery *p1, pSqlQuery *p2);
+int SortComp(const PSqlQuery *p1, PSqlQuery *p2);
 
 #include "sqldef.h"
 #include "global.h"
@@ -78,14 +78,14 @@ int PortalLink(const char *ProjectName, const char *BinDir, const char *BinExt, 
     s = t+2;
     LoadInFile(NextFileName, slink);
   }
-  qsort(Queries, NoQueries, sizeof(pSqlQuery), (fptr)SortComp);
+  qsort(Queries, NoQueries, sizeof(PSqlQuery), (fptr)SortComp);
   OpenBinFile(ProjectName, BinDir, BinExt);
   StoreBinFile(slink);
   return 0;
 }
 #endif
 
-int SortComp(const pSqlQuery *p1, pSqlQuery *p2)
+int SortComp(const PSqlQuery *p1, PSqlQuery *p2)
 {
   return stricmp(p1[0]->Name, p2[0]->Name);
 }
@@ -94,9 +94,9 @@ void LoadInFile(const char *InFileName, ushort &slink)
 {
   FILE* InFile;
   int FileSize;
-  tSqlQuery Query;
-  pSqlQuery Q;
-  pSqlToken Token;
+  TSqlQuery Query;
+  PSqlQuery Q;
+  PSqlToken Token;
   ushort i, j, NoProcs, sign;
   yyerror("%-13s: %s\n", "Input", InFileName);
   InFile = fopen(InFileName, "rb");
@@ -132,10 +132,10 @@ void LoadInFile(const char *InFileName, ushort &slink)
     Query.NoFields &= 0x0FFF;
     if (Query.NoFields)
     {
-      Query.Fields = (pSqlField)calloc(Query.NoFields, sizeof(tSqlField));
+      Query.Fields = (PSqlField)calloc(Query.NoFields, sizeof(TSqlField));
       for (j=0; j<Query.NoFields; j++)
       {
-        pSqlField Field = &Query.Fields[j];
+        PSqlField Field = &Query.Fields[j];
         Field->Name = getString(InFile);
         Field->CType = getInt16(InFile);
         Field->SqlType = getInt16(InFile);
@@ -161,9 +161,9 @@ void LoadInFile(const char *InFileName, ushort &slink)
       Query.Fields = 0;
     Query.Size = getUInt16(InFile);
     Query.Command = getExact(Query.Size, InFile);
-    Q = (pSqlQuery)malloc(sizeof(Query));
+    Q = (PSqlQuery)malloc(sizeof(Query));
     *Q = Query;
-    AddList(Queries, pSqlQuery, Q, NoQueries, 16);
+    AddList(Queries, PSqlQuery, Q, NoQueries, 16);
   }
   if (ftell(InFile) < FileSize)
   {
@@ -171,10 +171,10 @@ void LoadInFile(const char *InFileName, ushort &slink)
     if (sign == sqldefTailMark)
       goto Return;
     fseek(InFile, -2L, SEEK_CUR);
-    Token = (pSqlToken)calloc(sizeof(tSqlToken), 1);
+    Token = (PSqlToken)calloc(sizeof(TSqlToken), 1);
     Token->Name = getString(InFile);
     Token->Value = getString(InFile);
-    AddList(Tokens, pSqlToken, Token, NoTokens, 16);
+    AddList(Tokens, PSqlToken, Token, NoTokens, 16);
   }
 Return:
   if (InFile) fclose(InFile);
@@ -259,7 +259,7 @@ void StoreBinFile(ushort sign)
     putUInt16(Queries[i]->NoFields, BinFile);
     for (j=0; j<Queries[i]->NoFields; j++)
     {
-      pSqlField Field = &Queries[i]->Fields[j];
+      PSqlField Field = &Queries[i]->Fields[j];
       putString(Field->Name, BinFile);
       putInt16(Field->CType, BinFile);
       putInt16(Field->SqlType, BinFile);
@@ -315,7 +315,7 @@ void StoreBinFile(ushort sign)
       free(Queries[i]->Name);
       for (j=0; j<Queries[i]->NoFields; j++)
       {
-        pSqlField Field = &Queries[i]->Fields[j];
+        PSqlField Field = &Queries[i]->Fields[j];
         free(Field->Name);
       }
       if (Queries[i]->Fields)

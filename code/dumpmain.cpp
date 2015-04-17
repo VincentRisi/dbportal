@@ -39,7 +39,7 @@ void DumpSOFile(pchar InFileName, ushort &slink)
 {
   FILE* InFile;
   long FileSize;
-  tSqlQuery Query;
+  TSqlQuery Query;
   ushort i, j, NoProcs, sign;
   printf("%-13s: %s\n", "Input", InFileName);
   InFile = fopen(InFileName, "rb");
@@ -82,7 +82,7 @@ void DumpSOFile(pchar InFileName, ushort &slink)
           );
     if (Query.NoFields)
     {
-      tSqlField Field;
+      TSqlField Field;
       for (j=0; j<Query.NoFields; j++)
       {
         Field.Name = getString(InFile);

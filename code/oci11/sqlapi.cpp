@@ -36,12 +36,12 @@ static void OpenDebug()
 
 ushort ImageMax=8192;
 
-static tSqlCB ABNSqlCB;
-static tSqlCursor ABNSqlCursor;
+static TSqlCB ABNSqlCB;
+static TSqlCursor ABNSqlCursor;
 
-static pSqlCB _GetSqlCB(void);
-static pSqlCursor _SqlOpen(pSqlCB SqlCB, pSqlQuery SqlQuery, void* Data);
-static pchar _SqlError(pSqlCB SqlCB);
+static PSqlCB _GeTSqlCB(void);
+static PSqlCursor _SqlOpen(PSqlCB SqlCB, PSqlQuery SqlQuery, void* Data);
+static pchar _SqlError(PSqlCB SqlCB);
 
 #if !defined(APPLAPI)
 #define APPLAPI
@@ -93,7 +93,7 @@ pchar GetSqlError(int errNo)
   return _SqlApiError(errNo);
 }
 
-static char *_SqlError(pSqlCB SqlCB)
+static char *_SqlError(PSqlCB SqlCB)
 {
   const int bufsiz = 4096;
   if (!SqlCB->ociBuf)
@@ -128,7 +128,7 @@ static char *_SqlError(pSqlCB SqlCB)
   return (char*)SqlCB->ociBuf;
 }
 
-static char *_SqlCursorError(pSqlCursor SqlCursor)
+static char *_SqlCursorError(PSqlCursor SqlCursor)
 {
   char *result = _SqlError(SqlCursor->SqlCB);
   SqlCursor->RC = SqlCursor->SqlCB->RC;
@@ -137,14 +137,14 @@ static char *_SqlCursorError(pSqlCursor SqlCursor)
 }
 
 #if defined(M_W32)
-int APPLAPI SqlVBLogon(pSqlCB *SqlCB, pchar FileName, pchar User)
+int APPLAPI SqlVBLogon(PSqlCB *SqlCB, pchar FileName, pchar User)
 {
   int RC = SqlLogon(SqlCB, FileName, User);
   (*SqlCB)->isVB = 1;
   return RC;
 }
 
-int APPLAPI SqlNetLogon(pSqlCB *SqlCB, pchar FileName, pchar User)
+int APPLAPI SqlNetLogon(PSqlCB *SqlCB, pchar FileName, pchar User)
 {
   int RC = SqlLogon(SqlCB, FileName, User);
   (*SqlCB)->isVB = IS_NET;
@@ -152,14 +152,14 @@ int APPLAPI SqlNetLogon(pSqlCB *SqlCB, pchar FileName, pchar User)
 }
 #endif
 
-int APPLAPI SqlLogon(pSqlCB *SqlCB, pchar FileName, pchar User)
+int APPLAPI SqlLogon(PSqlCB *SqlCB, pchar FileName, pchar User)
 {
   char wUser[256], wPassword[256]="", wServer[256]="";
   strcpy(wUser, User);
   char *p1 = strchr(wUser, '@');
   char *p2 = strchr(wUser, '/');
-  pSqlCB CB;
-  CB = *SqlCB = _GetSqlCB();
+  PSqlCB CB;
+  CB = *SqlCB = _GeTSqlCB();
   if (CB->Error)
     goto Return;
   if (SqlBinOpen(&CB->SqlBin, FileName))
@@ -202,15 +202,15 @@ Return:
   return CB->Error;
 }
 
-int APPLAPI SqlSetTimeout(pSqlCB SqlCB, int milliSeconds=0)
+int APPLAPI SqlSetTimeout(PSqlCB SqlCB, int milliSeconds=0)
 {
   SqlCB->timeout = milliSeconds;
   return 0;
 }
 
-static pSqlCB _GetSqlCB(void)
+static PSqlCB _GeTSqlCB(void)
 {
-  pSqlCB SqlCB = (pSqlCB)calloc(sizeof(tSqlCB), 1);
+  PSqlCB SqlCB = (PSqlCB)calloc(sizeof(TSqlCB), 1);
   if (SqlCB == 0)
   {
     SqlCB = &ABNSqlCB;
@@ -221,10 +221,10 @@ static pSqlCB _GetSqlCB(void)
   return SqlCB;
 }
 
-static int InvalidCB(pSqlCB &SqlCB)
+static int InvalidCB(PSqlCB &SqlCB)
 {
 #if defined(M_W32)
-  if (SqlCB == 0 || IsBadWritePtr(SqlCB, sizeof(tSqlCB)) || SqlCB->Signature != CBSignature)
+  if (SqlCB == 0 || IsBadWritePtr(SqlCB, sizeof(TSqlCB)) || SqlCB->Signature != CBSignature)
 #else
   if (SqlCB == 0 || SqlCB->Signature != CBSignature)
 #endif
@@ -238,10 +238,10 @@ static int InvalidCB(pSqlCB &SqlCB)
   return 0;
 }
 
-static int InvalidCursor(pSqlCursor &SqlCursor)
+static int InvalidCursor(PSqlCursor &SqlCursor)
 {
 #if defined(M_W32)
-  if (SqlCursor == 0 || IsBadWritePtr(SqlCursor, sizeof(tSqlCursor)) || SqlCursor->Signature != CursorSignature)
+  if (SqlCursor == 0 || IsBadWritePtr(SqlCursor, sizeof(TSqlCursor)) || SqlCursor->Signature != CursorSignature)
 #else
   if (SqlCursor == 0 || SqlCursor->Signature != CursorSignature)
 #endif
@@ -255,10 +255,10 @@ static int InvalidCursor(pSqlCursor &SqlCursor)
   return 0;
 }
 
-int APPLAPI SqlOpen(pSqlCB SqlCB, pSqlCursor *SqlCursor, pchar Query, void* Data)
+int APPLAPI SqlOpen(PSqlCB SqlCB, PSqlCursor *SqlCursor, pchar Query, void* Data)
 {
-  pSqlCursor Cursor;
-  pSqlQuery  SqlQuery;
+  PSqlCursor Cursor;
+  PSqlQuery  SqlQuery;
   if (InvalidCB(SqlCB))
     return SqlCB->Error;
 #ifdef M_AIX
@@ -282,9 +282,9 @@ int APPLAPI SqlOpen(pSqlCB SqlCB, pSqlCursor *SqlCursor, pchar Query, void* Data
   return SqlCB->Error;
 }
 
-int APPLAPI SqlOpenWQ(pSqlCB SqlCB, pSqlCursor *SqlCursor, pSqlQuery Query, void* Data)
+int APPLAPI SqlOpenWQ(PSqlCB SqlCB, PSqlCursor *SqlCursor, PSqlQuery Query, void* Data)
 {
-  pSqlCursor Cursor;
+  PSqlCursor Cursor;
   if (InvalidCB(SqlCB))
     return SqlCB->Error;
 #ifdef M_AIX
@@ -301,7 +301,7 @@ int APPLAPI SqlOpenWQ(pSqlCB SqlCB, pSqlCursor *SqlCursor, pSqlQuery Query, void
   return SqlCB->Error;
 }
 
-int APPLAPI SqlOpenExec(pSqlCB SqlCB, pSqlCursor *SqlCursor, pchar Query, void* Data)
+int APPLAPI SqlOpenExec(PSqlCB SqlCB, PSqlCursor *SqlCursor, pchar Query, void* Data)
 {
   int RC;
   if (InvalidCB(SqlCB))
@@ -316,15 +316,15 @@ int APPLAPI SqlOpenExec(pSqlCB SqlCB, pSqlCursor *SqlCursor, pchar Query, void* 
 struct ATFields
 {
   int NoFields;
-  pSqlField *Fields;
+  PSqlField *Fields;
   ~ATFields()
   {
     delete [] Fields;
   }
-  ATFields(pSqlQuery SqlQuery)
+  ATFields(PSqlQuery SqlQuery)
   {
     NoFields = SqlQuery->NoFields;
-    Fields = new pSqlField[NoFields];
+    Fields = new PSqlField[NoFields];
     for (int i=0; i<NoFields; i++)
       Fields[i] = &SqlQuery->Fields[i];
     Sort();
@@ -332,7 +332,7 @@ struct ATFields
   void Sort()
   {
     int i, j;
-    pSqlField t;
+    PSqlField t;
     for (i=0; i <= NoFields-2; i++)
     {
       for (j=NoFields-1; j >= i+1; j--)
@@ -348,13 +348,13 @@ struct ATFields
   }
 };
 
-static void tonet(pSqlCursor SqlCursor, pchar aData)
+static void tonet(PSqlCursor SqlCursor, pchar aData)
 {
   ATFields F(SqlCursor->SqlQuery);
   pchar Data = (pchar)SqlCursor->Data;
   for (int i=0; i<F.NoFields; i++)
   {
-    pSqlField Field = F.Fields[i];
+    PSqlField Field = F.Fields[i];
     switch (Field->SqlType)
     {
       case 5:
@@ -374,13 +374,13 @@ static void tonet(pSqlCursor SqlCursor, pchar aData)
   }
 }
 
-static void fromnet(pSqlCursor SqlCursor, pchar aData)
+static void fromnet(PSqlCursor SqlCursor, pchar aData)
 {
   ATFields F(SqlCursor->SqlQuery);
   pchar Data = (pchar)SqlCursor->Data;
   for (int i=0; i<F.NoFields; i++)
   {
-    pSqlField Field = F.Fields[i];
+    PSqlField Field = F.Fields[i];
     switch (Field->SqlType)
     {
       case 5:
@@ -401,9 +401,9 @@ static void fromnet(pSqlCursor SqlCursor, pchar aData)
 }
 #endif
 
-int APPLAPI SqlRunProc(pSqlCB SqlCB, pchar Query, void* Data)
+int APPLAPI SqlRunProc(PSqlCB SqlCB, pchar Query, void* Data)
 {
-  pSqlCursor SqlCursor;
+  PSqlCursor SqlCursor;
   int RC;
   if (InvalidCB(SqlCB))
     return SqlCB->Error;
@@ -491,39 +491,39 @@ static void uncompress(char *ZLOB)
   }
 }
 
-static void VBPad(pSqlCursor SqlCursor)
+static void VBPad(PSqlCursor SqlCursor)
 {
   ushort i;
-  pSqlQuery SqlQuery = SqlCursor->SqlQuery;
+  PSqlQuery SqlQuery = SqlCursor->SqlQuery;
   pchar Data = (pchar) SqlCursor->Data;
 
   for (i=0; i<SqlQuery->NoFields; i++)
   {
-    pSqlField Field = &SqlQuery->Fields[i];
+    PSqlField Field = &SqlQuery->Fields[i];
     if ( (Field->SqlType==5) || (Field->SqlType==96) )
       vbstrrpad(Data+Field->Offset, (int16)Field->Size, ' ');
   }
 }
 
-static void VBTrim(pSqlCursor SqlCursor)
+static void VBTrim(PSqlCursor SqlCursor)
 {
   ushort i;
-  pSqlQuery SqlQuery = SqlCursor->SqlQuery;
+  PSqlQuery SqlQuery = SqlCursor->SqlQuery;
   pchar Data = (pchar) SqlCursor->Data;
   for (i=0; i<SqlQuery->NoFields; i++)
   {
-    pSqlField Field = &SqlQuery->Fields[i];
+    PSqlField Field = &SqlQuery->Fields[i];
     if ( (Field->SqlType==5) || (Field->SqlType==96) )
       vbstrrtrim(Data+Field->Offset, (int16)Field->Size);
   }
 }
 
-static int DynamicFieldSize(pSqlQuery aQuery, pchar token)
+static int DynamicFieldSize(PSqlQuery aQuery, pchar token)
 {
   int i;
   for (i=0; i < aQuery->NoFields; i++)
   {
-    pSqlField Field = &aQuery->Fields[i];
+    PSqlField Field = &aQuery->Fields[i];
     if ((Field->isBind == 0 && Field->isDefine == 0)
     && (stricmp(Field->Name+1, token)) == 0)
       return Field->Size;
@@ -531,12 +531,12 @@ static int DynamicFieldSize(pSqlQuery aQuery, pchar token)
   return 0;
 }
 
-static pchar DynamicFieldValue(pSqlQuery aQuery, pchar token, pchar data)
+static pchar DynamicFieldValue(PSqlQuery aQuery, pchar token, pchar data)
 {
   int i;
   for (i=0; i < aQuery->NoFields; i++)
   {
-    pSqlField Field = &aQuery->Fields[i];
+    PSqlField Field = &aQuery->Fields[i];
     if ((Field->isBind == 0 && Field->isDefine == 0)
     && (stricmp(Field->Name+1, token)) == 0)
     {
@@ -547,7 +547,7 @@ static pchar DynamicFieldValue(pSqlQuery aQuery, pchar token, pchar data)
   return "";
 }
 
-static pchar FixupCommand(pSqlQuery aQuery, pchar data)
+static pchar FixupCommand(PSqlQuery aQuery, pchar data)
 {
   int len = strlen(aQuery->Command), added=0;
   pchar nextPos = aQuery->Command;
@@ -580,12 +580,12 @@ static pchar FixupCommand(pSqlQuery aQuery, pchar data)
   return Command;
 }
 
-static pSqlCursor _SqlOpen(pSqlCB SqlCB, pSqlQuery SqlQuery, void* Data)
+static PSqlCursor _SqlOpen(PSqlCB SqlCB, PSqlQuery SqlQuery, void* Data)
 {
-  pSqlCursor SqlCursor;
+  PSqlCursor SqlCursor;
   pchar IndData;
   int i, no, size;
-  SqlCursor = (pSqlCursor) calloc(1, sizeof(tSqlCursor));
+  SqlCursor = (PSqlCursor) calloc(1, sizeof(TSqlCursor));
   if (SqlCursor == 0)
   {
     SqlCursor = &ABNSqlCursor;
@@ -598,7 +598,7 @@ static pSqlCursor _SqlOpen(pSqlCB SqlCB, pSqlQuery SqlQuery, void* Data)
   size=0;
   for (i=0; i<SqlCursor->SqlQuery->NoFields; i++)
   {
-    pSqlField Field = &SqlCursor->SqlQuery->Fields[i];
+    PSqlField Field = &SqlCursor->SqlQuery->Fields[i];
     no = Field->Offset+Field->Size;
     if (no > size)
       size = no;
@@ -629,7 +629,7 @@ static pSqlCursor _SqlOpen(pSqlCB SqlCB, pSqlQuery SqlQuery, void* Data)
   {
     for (i=0, size=0; i<SqlQuery->NoFields; i++)
     {
-      pSqlField Field = &SqlQuery->Fields[i];
+      PSqlField Field = &SqlQuery->Fields[i];
       if (Field->isDefine)
         size += Field->Size;
     }
@@ -711,7 +711,7 @@ static pSqlCursor _SqlOpen(pSqlCB SqlCB, pSqlQuery SqlQuery, void* Data)
   int length;
   for (i=0, no=0, size=0; i<SqlQuery->NoFields; i++)
   {
-    pSqlField Field = &SqlQuery->Fields[i];
+    PSqlField Field = &SqlQuery->Fields[i];
     if (Field->isBind)
     {
       if (Field->SqlType == SQL_OCI_BLIMAGE
@@ -744,11 +744,18 @@ static pSqlCursor _SqlOpen(pSqlCB SqlCB, pSqlQuery SqlQuery, void* Data)
       else if (Field->SqlType == SQL_OCI_XMLTYPE)
       {
         SqlCB->RC = OCIBindByName(SqlCursor->ociStmt,
-                                  &SqlCursor->ociBinds[BindNo++],                                  SqlCB->ociError,
+                                  &SqlCursor->ociBinds[BindNo++],
+                                  SqlCB->ociError,
                                   (text *) Field->Name, -1,
-                                  (void  *) 0, (sb4) 0,                                   SQLT_NTY,                                   &SqlCursor->Indicators[i*SqlCursor->RowsCount],
+                                  (void  *) 0, (sb4) 0, 
+                                  SQLT_NTY, 
+                                  &SqlCursor->Indicators[i*SqlCursor->RowsCount],
                                   0, 0, 0, 0, OCI_DEFAULT);
-        if (SqlCB->RC == 0)         {          SqlCB->RC = OCIBindObject(SqlCursor->ociBinds[BindNo], SqlCB->ociError,                                   addr_tdo, (void  **) &addr,                                  (ub4 *) 0, (void  **) &naddr, (ub4 *) 0));
+        if (SqlCB->RC == 0) 
+        {
+          SqlCB->RC = OCIBindObject(SqlCursor->ociBinds[BindNo], SqlCB->ociError, 
+                                  addr_tdo, (void  **) &addr,
+                                  (ub4 *) 0, (void  **) &naddr, (ub4 *) 0));
         }
       }
 #endif
@@ -860,15 +867,15 @@ static pSqlCursor _SqlOpen(pSqlCB SqlCB, pSqlQuery SqlQuery, void* Data)
   return SqlCursor;
 }
 
-static void FudgeData(pSqlCursor SqlCursor)
+static void FudgeData(PSqlCursor SqlCursor)
 {
   ushort i;
-  pSqlQuery SqlQuery = SqlCursor->SqlQuery;
+  PSqlQuery SqlQuery = SqlCursor->SqlQuery;
   pchar Data = (pchar) SqlCursor->Data;
   for (i=0; i<SqlQuery->NoFields; i++)
   {
     int16 isNull = 0;
-    pSqlField Field = &SqlQuery->Fields[i];
+    PSqlField Field = &SqlQuery->Fields[i];
     if (SqlQuery->isNullEnabled
     && ((Field->isBind|Field->isDefine) & fieldIsNullable)
     && ((Field->isBind|Field->isDefine) & fieldIsNull))
@@ -886,15 +893,15 @@ static void FudgeData(pSqlCursor SqlCursor)
   }
 }
 
-static void UnFudgeData(pSqlCursor SqlCursor)
+static void UnFudgeData(PSqlCursor SqlCursor)
 {
   ushort i;
-  pSqlQuery SqlQuery = SqlCursor->SqlQuery;
+  PSqlQuery SqlQuery = SqlCursor->SqlQuery;
   pchar Data = (pchar) SqlCursor->Data;
   for (i=0; i<SqlQuery->NoFields; i++)
   {
     int16 isNull = 0;
-    pSqlField Field = &SqlQuery->Fields[i];
+    PSqlField Field = &SqlQuery->Fields[i];
     if ((Field->isBind|Field->isDefine) & fieldIsNull)
     {
       int n = SqlCursor->RowIndex - 1;
@@ -926,12 +933,12 @@ static void UnFudgeData(pSqlCursor SqlCursor)
   }
 }
 
-int APPLAPI SqlSetNull(pSqlCursor SqlCursor, pchar aName, bool aHow)
+int APPLAPI SqlSetNull(PSqlCursor SqlCursor, pchar aName, bool aHow)
 {
   int i;
   for (i=0; i < SqlCursor->SqlQuery->NoFields; i++)
   {
-    pSqlField Field = &SqlCursor->SqlQuery->Fields[i];
+    PSqlField Field = &SqlCursor->SqlQuery->Fields[i];
     if ((stricmp(aName, Field->Name+1))==0)
     {
       SqlCursor->Indicators[i*SqlCursor->RowsCount] = (int16) (aHow ? -1 : 0);
@@ -944,12 +951,12 @@ int APPLAPI SqlSetNull(pSqlCursor SqlCursor, pchar aName, bool aHow)
   return SqlCursor->Error;
 }
 
-int APPLAPI SqlTestNull(pSqlCursor SqlCursor, pchar aName, bool *aHow)
+int APPLAPI SqlTestNull(PSqlCursor SqlCursor, pchar aName, bool *aHow)
 {
   int i,n;
   for (i=0; i < SqlCursor->SqlQuery->NoFields; i++)
   {
-    pSqlField Field = &SqlCursor->SqlQuery->Fields[i];
+    PSqlField Field = &SqlCursor->SqlQuery->Fields[i];
     if ((stricmp(aName, Field->Name+1))==0)
     {
       n = SqlCursor->RowIndex - 1;
@@ -965,9 +972,9 @@ int APPLAPI SqlTestNull(pSqlCursor SqlCursor, pchar aName, bool *aHow)
   return SqlCursor->Error;
 }
 
-static int DoTheFetch(pSqlCursor SqlCursor)
+static int DoTheFetch(PSqlCursor SqlCursor)
 {
-  pSqlQuery SqlQuery = SqlCursor->SqlQuery;
+  PSqlQuery SqlQuery = SqlCursor->SqlQuery;
   SqlCursor->Error = SqlApiOK;
   if (SqlQuery->isMultiFetch)
   {
@@ -1015,7 +1022,7 @@ static int DoTheFetch(pSqlCursor SqlCursor)
       pchar FromData, ToData;
       for (i=0, size=0; i<SqlQuery->NoFields; i++)
       {
-        pSqlField Field = &SqlQuery->Fields[i];
+        PSqlField Field = &SqlQuery->Fields[i];
         if (Field->isDefine)
         {
           FromData = (pchar)((pchar)SqlCursor->Buffer+size);
@@ -1060,14 +1067,14 @@ Return:
   return SqlCursor->Error;
 }
 
-static int FetchLobData(pSqlCursor SqlCursor)
+static int FetchLobData(PSqlCursor SqlCursor)
 {
   int el, i;
   ub4 length, read=0, offset=1;
   char** data;
   for (i = 0, el = 0; i < SqlCursor->SqlQuery->NoFields; i++)
   {
-    pSqlField Field = &SqlCursor->SqlQuery->Fields[i];
+    PSqlField Field = &SqlCursor->SqlQuery->Fields[i];
     if (Field->isDefine && Field->SqlType == SQL_OCI_HUGECHAR)
     {
       OCILobLocator *& lobLoc = SqlCursor->ociLobLocators[el];
@@ -1136,7 +1143,7 @@ static int FetchLobData(pSqlCursor SqlCursor)
   return SqlCursor->Error;
 }
 
-static int DoFetch(pSqlCursor SqlCursor)
+static int DoFetch(PSqlCursor SqlCursor)
 {
   int rc = DoTheFetch(SqlCursor);
   if (rc == 0 && SqlCursor->NoLobLocators > 0)
@@ -1145,7 +1152,7 @@ static int DoFetch(pSqlCursor SqlCursor)
 }
 
 #ifdef M_AIX
-static pSqlCB AlarmSqlCB;
+static PSqlCB AlarmSqlCB;
 static void AlarmExecBreak(int Signal)
 {
   alarm(0);
@@ -1154,9 +1161,9 @@ static void AlarmExecBreak(int Signal)
 }
 #endif
 
-int APPLAPI SqlExec(pSqlCursor SqlCursor)
+int APPLAPI SqlExec(PSqlCursor SqlCursor)
 {
-  pSqlQuery SqlQuery = SqlCursor->SqlQuery;
+  PSqlQuery SqlQuery = SqlCursor->SqlQuery;
   if (InvalidCursor(SqlCursor))
     return SqlCursor->Error;
   if (SqlCursor->SqlCB->isVB != 0) // VB neg Special Case
@@ -1210,7 +1217,7 @@ Return:
 }
 
 #if defined(M_W32)
-int APPLAPI SqlFetchData(pSqlCursor SqlCursor, void *Data)
+int APPLAPI SqlFetchData(PSqlCursor SqlCursor, void *Data)
 {
   int rc = SqlFetch(SqlCursor);
   if (SqlCursor->SqlCB->isVB > 0 && rc == 0)
@@ -1224,7 +1231,7 @@ int APPLAPI SqlFetchData(pSqlCursor SqlCursor, void *Data)
 }
 #endif
 
-int APPLAPI SqlFetch(pSqlCursor SqlCursor)
+int APPLAPI SqlFetch(PSqlCursor SqlCursor)
 {
   if (InvalidCursor(SqlCursor))
     return SqlCursor->Error;
@@ -1246,12 +1253,12 @@ int APPLAPI SqlFetch(pSqlCursor SqlCursor)
   return SqlCursor->Error;
 }
 
-static ushort GetSize(pSqlQuery SqlQuery)
+static ushort GetSize(PSqlQuery SqlQuery)
 {
   ushort i, size = 0;
   for (i=0; i<SqlQuery->NoFields; i++)
   {
-    pSqlField Field = &SqlQuery->Fields[i];
+    PSqlField Field = &SqlQuery->Fields[i];
     ushort next = (ushort) (Field->Offset + Field->Size);
     if (next > size)
       size = next;
@@ -1259,7 +1266,7 @@ static ushort GetSize(pSqlQuery SqlQuery)
   return (ushort)(((size+3)/4)*4);
 }
 
-int APPLAPI SqlFetchMany(pSqlCursor SqlCursor, pushort aNo, void *Data)
+int APPLAPI SqlFetchMany(PSqlCursor SqlCursor, pushort aNo, void *Data)
 {
   ushort i, No = *aNo;
   ushort size = GetSize(SqlCursor->SqlQuery);
@@ -1284,7 +1291,7 @@ int APPLAPI SqlFetchMany(pSqlCursor SqlCursor, pushort aNo, void *Data)
   return rc;
 }
 
-int APPLAPI SqlCancel(pSqlCursor SqlCursor) // No longer used
+int APPLAPI SqlCancel(PSqlCursor SqlCursor) // No longer used
 {
   if (InvalidCursor(SqlCursor))
     return SqlCursor->Error;
@@ -1293,7 +1300,7 @@ int APPLAPI SqlCancel(pSqlCursor SqlCursor) // No longer used
   return SqlCursor->Error;
 }
 
-int APPLAPI SqlClose(pSqlCursor SqlCursor)
+int APPLAPI SqlClose(PSqlCursor SqlCursor)
 {
   int i;
   char *n;
@@ -1333,7 +1340,7 @@ int APPLAPI SqlClose(pSqlCursor SqlCursor)
   return SqlCursor->Error;
 }
 
-int APPLAPI SqlCommit(pSqlCB SqlCB)
+int APPLAPI SqlCommit(PSqlCB SqlCB)
 {
   if (InvalidCB(SqlCB))
     return SqlCB->Error;
@@ -1359,7 +1366,7 @@ int APPLAPI SqlCommit(pSqlCB SqlCB)
   return SqlCB->Error;
 }
 
-int APPLAPI SqlRollback(pSqlCB SqlCB)
+int APPLAPI SqlRollback(PSqlCB SqlCB)
 {
   if (InvalidCB(SqlCB))
     return SqlCB->Error;
@@ -1385,7 +1392,7 @@ int APPLAPI SqlRollback(pSqlCB SqlCB)
   return SqlCB->Error;
 }
 
-int APPLAPI SqlLogoff(pSqlCB SqlCB)
+int APPLAPI SqlLogoff(PSqlCB SqlCB)
 {
   int RC;
   if (InvalidCB(SqlCB))
@@ -1417,28 +1424,28 @@ int APPLAPI SqlLogoff(pSqlCB SqlCB)
   return RC;
 }
 
-pchar APPLAPI SqlCBError(pSqlCB SqlCB)
+pchar APPLAPI SqlCBError(PSqlCB SqlCB)
 {
   if (InvalidCB(SqlCB))
     return "CB is Invalid";
   return (char *) SqlCB->ociBuf;
 }
 
-ushort APPLAPI SqlCBErrorCode(pSqlCB SqlCB)
+ushort APPLAPI SqlCBErrorCode(PSqlCB SqlCB)
 {
   if (InvalidCB(SqlCB))
     return (ushort) SqlCB->Error;
   return (ushort) SqlCB->ociErrCode;
 }
 
-bool APPLAPI SqlCBEOD(pSqlCB SqlCB)
+bool APPLAPI SqlCBEOD(PSqlCB SqlCB)
 {
   if (InvalidCB(SqlCB))
     return false;
   return SqlCB->RC == OCI_NO_DATA ? true : false;
 }
 
-pchar APPLAPI SqlCursorError(pSqlCursor SqlCursor)
+pchar APPLAPI SqlCursorError(PSqlCursor SqlCursor)
 {
   if (InvalidCursor(SqlCursor))
     return SqlCursor->ErrorMsg;
@@ -1446,42 +1453,42 @@ pchar APPLAPI SqlCursorError(pSqlCursor SqlCursor)
 }
 
 #if defined(M_W32)
-int APPLAPI SqlVBCBError(pSqlCB SqlCB, char * Message, int16 MessageLen)
+int APPLAPI SqlVBCBError(PSqlCB SqlCB, char * Message, int16 MessageLen)
 {
   strncpy(Message, SqlCBError(SqlCB), MessageLen-1);
   Message[MessageLen-1] = 0;
   return 0;
 }
 
-int APPLAPI SqlVBCommand(pSqlCursor SqlCursor, char * Message, int16 MessageLen)
+int APPLAPI SqlVBCommand(PSqlCursor SqlCursor, char * Message, int16 MessageLen)
 {
   strncpy(Message, SqlCursor->Command, MessageLen-1);
   Message[MessageLen-1] = 0;
   return 0;
 }
 
-int APPLAPI SqlVBCursorError(pSqlCursor SqlCursor, char * Message, int16 MessageLen)
+int APPLAPI SqlVBCursorError(PSqlCursor SqlCursor, char * Message, int16 MessageLen)
 {
   strncpy(Message, SqlCursorError(SqlCursor), MessageLen-1);
   Message[MessageLen-1] = 0;
   return 0;
 }
 
-int APPLAPI SqlNetCBError(pSqlCB SqlCB, char * Message, int16 MessageLen)
+int APPLAPI SqlNetCBError(PSqlCB SqlCB, char * Message, int16 MessageLen)
 {
   strncpy(Message, SqlCBError(SqlCB), MessageLen-1);
   Message[MessageLen-1] = 0;
   return 0;
 }
 
-int APPLAPI SqlNetCommand(pSqlCursor SqlCursor, char * Message, int16 MessageLen)
+int APPLAPI SqlNetCommand(PSqlCursor SqlCursor, char * Message, int16 MessageLen)
 {
   strncpy(Message, SqlCursor->Command, MessageLen-1);
   Message[MessageLen-1] = 0;
   return 0;
 }
 
-int APPLAPI SqlNetCursorError(pSqlCursor SqlCursor, char * Message, int16 MessageLen)
+int APPLAPI SqlNetCursorError(PSqlCursor SqlCursor, char * Message, int16 MessageLen)
 {
   strncpy(Message, SqlCursorError(SqlCursor), MessageLen-1);
   Message[MessageLen-1] = 0;
@@ -1489,21 +1496,21 @@ int APPLAPI SqlNetCursorError(pSqlCursor SqlCursor, char * Message, int16 Messag
 }
 #endif
 
-ushort APPLAPI SqlCursorErrorCode(pSqlCursor SqlCursor)
+ushort APPLAPI SqlCursorErrorCode(PSqlCursor SqlCursor)
 {
   if (InvalidCursor(SqlCursor))
     return (ushort) SqlCursor->Error;
   return (ushort) SqlCursor->ociErrCode;
 }
 
-bool APPLAPI SqlEOD(pSqlCursor SqlCursor)
+bool APPLAPI SqlEOD(PSqlCursor SqlCursor)
 {
   if (InvalidCursor(SqlCursor))
     return false;
   return SqlCursor->RC == OCI_NO_DATA ? true : false;
 }
 
-bool APPLAPI SqlDuplErr(pSqlCursor SqlCursor)
+bool APPLAPI SqlDuplErr(PSqlCursor SqlCursor)
 {
   if (InvalidCursor(SqlCursor))
     return false;

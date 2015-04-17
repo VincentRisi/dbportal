@@ -7,10 +7,10 @@
 extern "C" {
 #endif  /* __cplusplus */
 
-typedef struct SqlToken tSqlToken, *pSqlToken;
-typedef struct SqlQuery tSqlQuery, *pSqlQuery;
-typedef struct SqlField tSqlField, *pSqlField;
-typedef struct SqlBin    tSqlBin,  *pSqlBin;
+typedef struct SqlToken TSqlToken, *PSqlToken;
+typedef struct SqlQuery TSqlQuery, *PSqlQuery;
+typedef struct SqlField TSqlField, *PSqlField;
+typedef struct SqlBin   TSqlBin,   *PSqlBin;
 
 enum { fieldIsPrimaryKey   = 0x8000
      , fieldIsNull         = 0x4000
@@ -43,7 +43,7 @@ struct SqlQuery
   ushort    SchemaNo;
   ushort    TableNo;
   ushort    NoFields;
-  pSqlField Fields;
+  PSqlField Fields;
   ushort    Size;
   pchar     Command;
   ushort    isSql;
@@ -61,7 +61,7 @@ struct SqlToken
 struct SqlBin
 {
   ushort     NoQueries;
-  pSqlQuery  Queries;
+  PSqlQuery  Queries;
   ushort     NoServers;
   pchar      *Servers;
   ushort     NoSchemas;
@@ -71,16 +71,16 @@ struct SqlBin
   short      Error;
   pchar      ErrorMsg;
   ushort     NoTokens;
-  pSqlToken  Tokens;
+  PSqlToken  Tokens;
 };
 
-int APPLAPI SqlBinOpen(pSqlBin *SqlBin, pchar FileName);
+int APPLAPI SqlBinOpen(PSqlBin *SqlBin, pchar FileName);
 // Reads Binary File into MEMORY and Closes File.
-int APPLAPI SqlBinQuery(pSqlBin SqlBin, pSqlQuery *SqlQuery, pchar QueryName);
+int APPLAPI SqlBinQuery(PSqlBin SqlBin, PSqlQuery *SqlQuery, pchar QueryName);
 // Retrieves the query from MEMORY
-int APPLAPI SqlBinToken(pSqlBin SqlBin, pSqlToken *SqlToken, pchar TokenName);
+int APPLAPI SqlBinToken(PSqlBin SqlBin, PSqlToken *SqlToken, pchar TokenName);
 // Retrieves the token from MEMORY
-int APPLAPI SqlBinClose(pSqlBin SqlBin);
+int APPLAPI SqlBinClose(PSqlBin SqlBin);
 // Frees up the MEMORY.
 
 #ifdef __cplusplus

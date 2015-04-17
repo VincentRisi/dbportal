@@ -10,10 +10,10 @@ extern ushort slinkSign2;
 extern ushort sqldefTailMark;
 
 extern ushort NoQueries;
-extern pSqlQuery *Queries;
+extern PSqlQuery *Queries;
 
 typedef int (*fptr)(const void*, const void*);
-int SortComp(const pSqlQuery *p1, pSqlQuery *p2);
+int SortComp(const PSqlQuery *p1, PSqlQuery *p2);
 
 void LoadInFile(const char *infile, ushort &sign);
 void OpenBinFile(const char *path, const char *BinDir, const char *BinExt);
