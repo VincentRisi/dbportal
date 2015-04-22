@@ -5,6 +5,12 @@
 static const char* outDirName = "";
 static const char* inListName = "";
 static const char* whitespace = " ;\r\n\"";
+static const char* addToList =
+  "#define ADD_TO_LIST(POINTER, TYPE, DATA, INDEX, DELTA) do {\\\n"
+  "  if (INDEX % DELTA == 0)\\\n"
+  "    POINTER = (TYPE*)realloc(POINTER, sizeof(DATA)*(INDEX + DELTA));\\\n"
+  "  POINTER[INDEX++] = DATA;\\\n"
+  "  } while(0)\n\n";
 
 ARG argtab[] =
 { {'o', STRING,  (int*) &outDirName, "Output Directory"}
@@ -15,6 +21,19 @@ ARG argtab[] =
 enum
 { COMPLETED_OK
 , INLIST_FILE_NOT_OPENED
+};
+
+struct AutoFILE
+{
+  FILE* file;
+  AutoFILE(const char *name, const char* mode)
+  {
+    file = fopen(name, mode);
+  }
+  ~AutoFILE() 
+  {
+    if (file) fclose(file);
+  }
 };
 
 struct AutoXdir
@@ -86,7 +105,10 @@ static void doStructField(FILE* ofile, PSqlField field)
     fprintf(ofile, "  // SQL_C_XMLTYPE} %s;\n", name);
     break;
   default:  
-    fprintf(ofile, "  // %04x %s;\n", (unsigned)field->CType, name);
+    if (field->isBind == 0 && field->isDefine == 0)
+      fprintf(ofile, "  char %s[%hu];\n", name, field->Size);
+    else  
+      fprintf(ofile, "  // %04x %s;\n", (unsigned)field->CType, name);
     break;
   }
 }
@@ -125,9 +147,9 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query)
                      , field->Name+1
                      );
     }
-    fprintf(ofile, "  } null;\n");
+    fprintf(ofile, "  } ind;\n");
   }
-  fprintf(ofile, "} %sRec;\n\n", query->Name);
+  fprintf(ofile, "} %sRec, *P%sRec;\n\n", query->Name, query->Name);
   if (hasDynamic == false)
     return;
   fprintf(ofile, "inline char* DYNAMIC(%sRec &rec, const char* name)\n{\n"
@@ -153,17 +175,140 @@ static int doHeader(SqlSO& sqlSO, const char* inName)
   char outName[1024];
   SqlSO::makeOutName(outName, sizeof(outName), inName, ".h", outDirName);
   AutoXdir ax(outName);  
-  FILE* ofile = fopen(outName, "wt");
-  fprintf(ofile, "#ifndef _%s_H_\n", ax.name);
-  fprintf(ofile, "#define _%s_H_\n\n", ax.name);
+  AutoFILE out(outName, "wt");
+  fprintf(out.file, "#ifndef _%s_H_\n", ax.name);
+  fprintf(out.file, "#define _%s_H_\n\n", ax.name);
   for (int q = 0; q < sqlSO.noQueries; q++)
   {
     PSqlQuery query = sqlSO.queries[q];
-    doQueryStructs(ofile, query);
+    if (query->isSql)
+      doQueryStructs(out.file, query);
   }
-  fprintf(ofile, "#endif\n");
-  fclose(ofile);
+  fprintf(out.file, "#endif\n");
   return result;
+}
+
+static void doCodeField(FILE* ofile, PSqlField field)
+{
+  char type[32];
+  char *name = field->Name+1;
+  switch (field->CType)
+  {
+  case SQL_C_BINARY:
+    fprintf(ofile, "  unsigned char *%s = rec->%s;\n", name, name);
+    break;
+  case SQL_C_CHAR:
+  case SQL_C_DATE:
+  case SQL_C_TIME:
+  case SQL_C_TIMESTAMP:
+    fprintf(ofile, "  char *%s = rec->%s;\n", name, name);
+    break;
+  case SQL_C_DOUBLE:
+  case SQL_C_FLOAT:
+    fprintf(ofile, "  double *%s = &rec->%s;\n", name, name);
+    break;
+  case SQL_C_LONG64:
+    fprintf(ofile, "  long long *%s = &rec->%s;\n", name, name);
+    break;
+  case SQL_C_LONG:
+    fprintf(ofile, "  int *%s = &rec->%s;\n", name, name);
+    break;
+  case SQL_C_SHORT:
+    fprintf(ofile, "  short int *%s = &rec->%s;\n", name, name);
+    break;
+  case SQL_C_TINYINT:
+  case SQL_C_BIT:
+    fprintf(ofile, "  char *%s = &rec->%s;\n", name, name);
+    break;
+  case SQL_C_CLIMAGE:
+    fprintf(ofile, "  short int *%s_len = &rec->%s.len;\n", name, name);
+    fprintf(ofile, "  unsigned char *%s_data = rec->%s.data;\n", name, name);
+    break;
+  case SQL_C_BLIMAGE:
+    fprintf(ofile, "  int *%s_len = &rec->%s.len;\n", name, name);
+    fprintf(ofile, "  unsigned char *%s_data = rec->%s.data;\n", name, name);
+    break;
+  case SQL_C_ZLIMAGE:
+    fprintf(ofile, "  // SQL_C_ZLIMAGE} %s;\n", name);
+    break;
+  case SQL_C_HUGECHAR:
+    fprintf(ofile, "  // SQL_C_HUGECHAR} %s;\n", name);
+    break;
+  case SQL_C_XMLTYPE:
+    fprintf(ofile, "  // SQL_C_XMLTYPE} %s;\n", name);
+    break;
+  default:  
+    if (field->isBind == 0 && field->isDefine == 0)
+      fprintf(ofile, "  char *%s = rec->%s;\n", name, name);
+  else
+      fprintf(ofile, "  // %04x %s;\n", (unsigned)field->CType, name);
+    break;
+  }
+  if (((field->isBind|field->isDefine) & fieldIsNullable)
+  &&  ((field->isBind|field->isDefine) & fieldIsNull))
+    fprintf(ofile, "  short int *%s_ind = &rec->ind.%s;\n", name, name);
+}
+
+static void doQueryFetch(FILE* ofile, PSqlQuery query
+  , bool useInds
+  , bool hasDynamic
+  )
+{
+  int f;
+  fprintf(ofile, "bool %s(P%sRec rec)\n{\n", query->Name, query->Name);
+  for (f=0; f<query->NoFields; f++)
+  {
+    PSqlField field = &query->Fields[f];
+    doCodeField(ofile, field);
+  }
+  fprintf(ofile, "}\n\n");
+}
+
+static void doQueryMultiFetch(FILE* ofile, PSqlQuery query
+  , bool useInds
+  , bool hasDynamic
+  )
+{
+  int f;
+  fprintf(ofile, "void %sExec(P%sRec rec)\n{\n"
+               , query->Name, query->Name
+               );
+  for (f=0; f<query->NoFields; f++)
+  {
+    PSqlField field = &query->Fields[f];
+    doCodeField(ofile, field);
+  }
+  fprintf(ofile, "}\n\n");
+  fprintf(ofile, "bool %sFetch(P%sRec rec)\n{\n"
+               , query->Name, query->Name
+               );
+  fprintf(ofile, "}\n\n");
+  fprintf(ofile, "int %s(P%sRec rec, P%sRec* recs)\n{\n"
+               , query->Name, query->Name, query->Name
+               );
+  fprintf(ofile, "  %sExec(rec);\n", query->Name);
+  fprintf(ofile, "  while (true)\n");
+  fprintf(ofile, "  {\n");
+  fprintf(ofile, "    if (%sFetch(rec) == false)", query->Name);
+  fprintf(ofile, "      break;\n");
+  fprintf(ofile, "    //ADDLIST()#;\n");
+  fprintf(ofile, "  }\n");
+  fprintf(ofile, "}\n\n");
+}
+
+static void doQueryAction(FILE* ofile, PSqlQuery query
+  , bool useInds
+  , bool hasDynamic
+  )
+{
+  int f;
+  fprintf(ofile, "void %s(P%sRec rec)\n{\n", query->Name, query->Name);
+  for (f=0; f<query->NoFields; f++)
+  {
+    PSqlField field = &query->Fields[f];
+    doCodeField(ofile, field);
+  }
+  fprintf(ofile, "}\n\n");
 }
 
 static void doQueryCode(FILE* ofile, PSqlQuery query)
@@ -181,6 +326,17 @@ static void doQueryCode(FILE* ofile, PSqlQuery query)
       continue;
     hasDynamic = true;
   }
+  if (query->isFetch)
+  {
+    doQueryFetch(ofile, query, useInds, hasDynamic);
+    return;
+  }
+  if (query->isMultiFetch)
+  {
+    doQueryMultiFetch(ofile, query, useInds, hasDynamic);
+    return;
+  }
+  doQueryAction(ofile, query, useInds, hasDynamic);
 }
 
 static int doCode(SqlSO& sqlSO, const char* inName)
@@ -189,14 +345,14 @@ static int doCode(SqlSO& sqlSO, const char* inName)
   char outName[1024];
   SqlSO::makeOutName(outName, sizeof(outName), inName, ".pc", outDirName);
   AutoXdir ax(outName);  
-  FILE* ofile = fopen(outName, "wt");
-  fprintf(ofile, "#include \"%s.h\"\n", ax.name);
+  AutoFILE out(outName, "wt");
+  fprintf(out.file, "#include \"%s.h\"\n", ax.name);
   for (int q = 0; q < sqlSO.noQueries; q++)
   {
     PSqlQuery query = sqlSO.queries[q];
-    doQueryCode(ofile, query);
+    if (query->isSql)
+      doQueryCode(out.file, query);
   }
-  fclose(ofile);
   return result;
 }
 
@@ -223,12 +379,12 @@ static int generateInList(const char* inListName)
     return result;
   char buff[8192], fileName[1024], *pb;
   const char* ws;
-  FILE* inList = fopen(inListName, "rt");
-  if (inList == 0)
+  AutoFILE in(inListName, "rt");
+  if (in.file == 0)
     return INLIST_FILE_NOT_OPENED;
   while (1)
   {
-    if (fgets(buff, sizeof(buff), inList) == 0)
+    if (fgets(buff, sizeof(buff), in.file) == 0)
       break;
     pb = buff;
     while(1)
@@ -246,7 +402,6 @@ static int generateInList(const char* inListName)
         result = rc;
     }
   }
-  if (inList) fclose(inList);
   return result;
 }
 

@@ -69,6 +69,7 @@ file (MAKE_DIRECTORY
   ${TOOLS_DIR}
   )
 
+add_subdirectory (tools/cocoR/cpp)
 add_subdirectory (pocilib)
 add_subdirectory (pocioci)
 add_subdirectory (pocilink)

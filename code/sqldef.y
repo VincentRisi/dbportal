@@ -752,12 +752,6 @@ FieldType
   else
     Proc.hasLOB = 1;
   SetFieldType(ftypeBLOB, $2);
-  if (FieldState == stateOutput && Proc.isMultiFetch)
-  {
-    if (Proc.isMultiFetch == 1)
-      yyreport(CODING_ERROR, "(multiple) cannot be used with LOB data.\n");
-    Proc.isMultiFetch = 0;
-  }
 }
 | sqldefCLOB Number
 {
@@ -766,12 +760,6 @@ FieldType
   else
     Proc.hasLOB = 1;
   SetFieldType(ftypeCLOB, $2);
-  if (FieldState == stateOutput && Proc.isMultiFetch)
-  {
-    if (Proc.isMultiFetch == 1)
-      yyreport(CODING_ERROR, "(multiple) cannot be used with LOB data.\n");
-    Proc.isMultiFetch = 0;
-  }
 }
 | sqldefZLOB Number
 {
@@ -780,12 +768,6 @@ FieldType
   else
     Proc.hasLOB = 1;
   SetFieldType(ftypeZLOB, $2);
-  if (FieldState == stateOutput && Proc.isMultiFetch)
-  {
-    if (Proc.isMultiFetch == 1)
-      yyreport(CODING_ERROR, "(multiple) cannot be used with LOB data.\n");
-    Proc.isMultiFetch = 0;
-  }
 }
 | sqldefHUGECHAR
 {
@@ -802,12 +784,6 @@ FieldType
   else
     Proc.hasImage = 1;
   SetFieldType(ftypeImage, $2);
-  if (FieldState == stateOutput && Proc.isMultiFetch)
-  {
-    if (Proc.isMultiFetch == 1)
-      yyreport(CODING_ERROR, "(multiple) cannot be used with Image data.\n");
-    Proc.isMultiFetch = 0;
-  }
 }
 | sqldefXMLTYPE Number
 {
@@ -816,12 +792,6 @@ FieldType
   else
     Proc.hasXMLTYPE = 1;
   SetFieldType(ftypeXMLTYPE, $2);
-  if (FieldState == stateOutput && Proc.isMultiFetch)
-  {
-    if (Proc.isMultiFetch == 1)
-      yyreport(CODING_ERROR, "(multiple) cannot be used with XMLTYPE data.\n");
-    Proc.isMultiFetch = 0;
-  }
 }
 | sqldefDATETIME
 {
@@ -1562,14 +1532,17 @@ ReUse
 OptMultiSingle
 :
 {
-  Proc.isMultiFetch = 2;
+  Proc.isMultiFetch = 1;
+  Proc.isFetch = 0;
 }
 | '(' sqldefMULTIPLE ')'
 {
   Proc.isMultiFetch = 1;
+  Proc.isFetch = 0;
 }
 | '(' sqldefSINGLE   ')'
 {
+  Proc.isMultiFetch = 0;
   Proc.isFetch = 1;
 };
 
@@ -2838,7 +2811,7 @@ static void CreateSelectAll(int Update)
   else
     SetProc(strdup("SelectAll"));
   Proc.isSql = 1;
-  Proc.isMultiFetch = (Table->hasImage == 1 || Table->hasLOB == 1) ? 0 : 1;
+  Proc.isMultiFetch = 1; /*(Table->hasImage == 1 || Table->hasLOB == 1) ? 0 :*/
   Proc.useStd = 1;
   Proc.isStd = 1;
   LineState = stateCode;
