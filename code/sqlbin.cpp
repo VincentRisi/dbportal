@@ -144,8 +144,8 @@ static PSqlBin _SqlBinOpen(pchar aFileName)
     Query->ServerNo      = getUInt16(BinFile);
     Query->SchemaNo      = getUInt16(BinFile);
     Query->isSql         = Query->SchemaNo & 0x8000;
-    Query->isFetch       = Query->SchemaNo & 0x4000;
-    Query->isMultiFetch  = Query->SchemaNo & 0x2000;
+    Query->isSingle       = Query->SchemaNo & 0x4000;
+    Query->isManyQuery  = Query->SchemaNo & 0x2000;
     Query->isNullEnabled = Query->SchemaNo & 0x1000;
     Query->SchemaNo     &= 0x0FFF;
     Query->TableNo       = getUInt16(BinFile);

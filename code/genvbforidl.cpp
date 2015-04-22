@@ -245,7 +245,7 @@ static void GenerateVBforIDLServerCode(PYYTable Table)
       continue;
     if (Proc->useStd)
     {
-      if (Proc->isFetch != 0)
+      if (Proc->isSingle != 0)
       {
         sprintf(structName, "%s%s", US, Dehash(Table->Name));
         sprintf(procName, "%s%s%s%s", US, Dehash(Table->Name), US, Proc->Name);
@@ -274,7 +274,7 @@ static void GenerateVBforIDLServerCode(PYYTable Table)
     }
     else
     {
-      if (Proc->isFetch != 0)
+      if (Proc->isSingle != 0)
       {
         sprintf(procName, "%s%s%s%s", US, Dehash(Table->Name), US, Proc->Name);
         GenerateVBforIDLServerAction(procName, procName, Table->IDLModule, true);
@@ -495,7 +495,7 @@ static void GenerateVBforIDLClientCode(PYYTable Table)
       continue;
     if (Proc->useStd)
     {
-      if (Proc->isFetch != 0)
+      if (Proc->isSingle != 0)
       {
         sprintf(structName, "%s%s", US, Dehash(Table->Name));
         sprintf(procName, "%s%s%s%s", US, Dehash(Table->Name), US, Proc->Name);
@@ -524,7 +524,7 @@ static void GenerateVBforIDLClientCode(PYYTable Table)
     }
     else
     {
-      if (Proc->isFetch != 0)
+      if (Proc->isSingle != 0)
       {
         sprintf(procName, "%s%s%s%s", US, Dehash(Table->Name), US, Proc->Name);
         GenerateVBforIDLClientReadOne(procName, procName, Table->Name, Table->IDLModule);

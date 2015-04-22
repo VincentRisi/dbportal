@@ -266,7 +266,7 @@ static void GenerateIDLCode(PYYTable Table)
       continue;
     if (Proc->useStd)
     {
-      if (Proc->isFetch != 0)
+      if (Proc->isSingle != 0)
       {
         sprintf(structName, "%s%s", US, Dehash(Table->Name));
         sprintf(procName, "%s%s%s%s", US, Dehash(Table->Name), US, Proc->Name);
@@ -295,7 +295,7 @@ static void GenerateIDLCode(PYYTable Table)
     }
     else
     {
-      if (Proc->isFetch != 0)
+      if (Proc->isSingle != 0)
       {
         sprintf(procName, "%s%s%s%s", US, Dehash(Table->Name), US, Proc->Name);
         GenerateIDLReadOne(procName, procName, Proc->Name, Table->IDLUbi != 0);

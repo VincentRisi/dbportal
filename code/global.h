@@ -561,12 +561,12 @@ struct TYYProc
   int32     noProjects;
   PYYLine   Projects;
   uchar     isSql;
-  uchar     isFetch;
+  uchar     isSingle;
   uchar     isData;
   uchar     useStd;
   uchar     useKey;
   uchar     isStd;
-  uchar     isMultiFetch;
+  uchar     isManyQuery;
   uchar     isSProc;
   uchar     hasImage;
   uchar     hasLOB;

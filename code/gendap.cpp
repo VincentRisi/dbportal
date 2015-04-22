@@ -948,7 +948,7 @@ static void GenerateCSTableProcs(PYYTable Table)
   //  for (i=0; i<Table->noProcs; i++)
   //  {
   //    PYYProc Proc = &Table->Procs[i];
-  //    if (Proc->isData || Proc->isFetch)
+  //    if (Proc->isData || Proc->isSingle)
   //      continue;
   //    if (Table->TargetCSDap == 0 && (Proc->extProc & doCSDAP) == 0)
   //      continue;
@@ -959,7 +959,7 @@ static void GenerateCSTableProcs(PYYTable Table)
     //for (i=0; i<Table->noProcs; i++)
     //{
     //  PYYProc Proc = &Table->Procs[i];
-    //  if (Proc->isData || Proc->isStd || Proc->isFetch)
+    //  if (Proc->isData || Proc->isStd || Proc->isSingle)
     //    continue;
     //  if (Table->TargetCSDap == 0 && (Proc->extProc & doCSDAP) == 0)
     //    continue;
@@ -977,7 +977,7 @@ static void GenerateCSTableProcs(PYYTable Table)
       }
       else if (Proc->useStd)
       {
-        if (Proc->isSql && Proc->isFetch)
+        if (Proc->isSql && Proc->isSingle)
           CSNetSingleProc(Proc);
         else if (Proc->isSql && Proc->noOutputs > 0)
           CSNetMultiProc(Table, Proc, Table->Name);
@@ -1053,7 +1053,7 @@ static void GenerateCSProcProcs(PYYTable Table, PYYProc Proc)
   if (Table->TargetCSDap == 0 && (Proc->extProc & doCSDAP) == 0)
     return;
   sprintf(Work, "%s%s", Table->Name, Proc->Name);
-  if (Proc->isSql && Proc->isFetch)
+  if (Proc->isSql && Proc->isSingle)
   {
     CSNetSingleProc(Proc);
   }

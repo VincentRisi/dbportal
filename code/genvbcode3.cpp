@@ -410,7 +410,7 @@ static void GenerateVBTableProcs(PYYTable Table)
     for (i=0; i<Table->noProcs; i++)
     {
       PYYProc Proc = &Table->Procs[i];
-      if (Proc->isData || Proc->isStd || Proc->isFetch)
+      if (Proc->isData || Proc->isStd || Proc->isSingle)
         continue;
       // Must be MarkedVBCode3 if TargetVBCode3 == 0
       if (Table->TargetVBCode3 == 0 && (Proc->extProc & doVBCODE3) == 0)
@@ -453,7 +453,7 @@ static void GenerateVBTableProcs(PYYTable Table)
         VB5NoIOProc(Table, Proc->Name);
       else if (Proc->useStd)
       {
-        if (Proc->isSql && Proc->isFetch)
+        if (Proc->isSql && Proc->isSingle)
           VB5SingleProc(Table, Proc->Name, Dehash(Table->Name));
         else if (Proc->isSql && Proc->noOutputs > 0)
           VB5MultiProc(Table, Proc->Name, Dehash(Table->Name));
@@ -575,7 +575,7 @@ static void GenerateVBProcProcs(PYYTable Table, PYYProc Proc)
     return;
   sprintf(Work, "%s%s%s", Dehash(Table->Name), US, Proc->Name);
   MakeVBClassName(Table, Work);
-  if (Proc->isSql && Proc->isFetch)
+  if (Proc->isSql && Proc->isSingle)
   {
     fprintf(VBCode3File, "\n");
     VB5SingleProc(Table, Proc->Name, Work);

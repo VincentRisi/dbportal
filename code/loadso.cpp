@@ -49,8 +49,8 @@ int SqlSO::loadInFile(const char *inFileName)
     query->Name = getString(inFile);
     query->NoFields = getUInt16(inFile);
     if (query->NoFields & 0x8000) query->isSql = 1;
-    if (query->NoFields & 0x4000) query->isFetch = 1;
-    if (query->NoFields & 0x2000) query->isMultiFetch = 1;
+    if (query->NoFields & 0x4000) query->isSingle = 1;
+    if (query->NoFields & 0x2000) query->isManyQuery = 1;
     if (query->NoFields & 0x1000) query->isNullEnabled = 1;
     query->NoFields &= 0x0FFF;
     if (query->NoFields)

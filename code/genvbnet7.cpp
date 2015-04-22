@@ -565,7 +565,7 @@ static void GenerateVBTableProcs(PYYTable Table)
     for (i=0; i<Table->noProcs; i++)
     {
       PYYProc Proc = &Table->Procs[i];
-      if (Proc->isData || Proc->isStd || Proc->isFetch)
+      if (Proc->isData || Proc->isStd || Proc->isSingle)
         continue;
       if (Table->TargetVBNet7 == 0 && (Proc->extProc & doVBNET7) == 0)
         continue;
@@ -606,7 +606,7 @@ static void GenerateVBTableProcs(PYYTable Table)
         VBNetNoIOProc(Table, Proc->Name);
       else if (Proc->useStd)
       {
-        if (Proc->isSql && Proc->isFetch)
+        if (Proc->isSql && Proc->isSingle)
           VBNetSingleProc(Table, Proc->Name, Dehash(Table->Name));
         else if (Proc->isSql && Proc->noOutputs > 0)
           VBNetMultiProc(Table, Proc->Name, Dehash(Table->Name));
@@ -828,7 +828,7 @@ static void GenerateVBProcProcs(PYYTable Table, PYYProc Proc)
   sprintf(Work, "%s%s%s", Dehash(Table->Name), US, Proc->Name);
   GenerateVBClassTop(Work);
   GenerateVBInit(Work);
-  if (Proc->isSql && Proc->isFetch)
+  if (Proc->isSql && Proc->isSingle)
   {
     fprintf(VBNet7File, "\n");
     VBNetSingleProc(Table, Proc->Name, Work);

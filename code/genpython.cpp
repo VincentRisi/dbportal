@@ -1034,7 +1034,7 @@ static void GenerateI3NonInternalStd(PYYTable Table)
 
 static void GenerateProc(PYYTable Table, PYYProc Proc)
 {
-  if (Proc->isSql && Proc->isFetch == 0 && Proc->noOutputs > 0)
+  if (Proc->isSql && Proc->isSingle == 0 && Proc->noOutputs > 0)
   {
     GenerateRunFetch(Table->Name, Proc->Name, Proc->useStd ? 0 : 1);
   }
@@ -1052,7 +1052,7 @@ static void GenerateProc(PYYTable Table, PYYProc Proc)
 
 static void GenerateCS7Proc(PYYTable Table, PYYProc Proc)
 {
-  if (Proc->isSql && Proc->isFetch == 0 && Proc->noOutputs > 0)
+  if (Proc->isSql && Proc->isSingle == 0 && Proc->noOutputs > 0)
     GenerateCS7RunFetch(Table->Name, Proc->Name, Proc->useStd ? Table->noFields : Proc->noFields, Proc->useStd ? Table->Fields : Proc->Fields);
   else if (Proc->noFields > 0)
     GenerateCS7Single(Table->Name, Proc->Name, Proc->noFields, Proc->Fields);
@@ -1062,7 +1062,7 @@ static void GenerateCS7Proc(PYYTable Table, PYYProc Proc)
 
 static void GenerateI3Proc(PYYTable Table, PYYProc Proc)
 {
-  if (Proc->isSql && Proc->isFetch == 0 && Proc->noOutputs > 0)
+  if (Proc->isSql && Proc->isSingle == 0 && Proc->noOutputs > 0)
     GenerateI3RunFetch(Table->Name, Proc->Name, Proc->useStd ? Table->noFields : Proc->noFields, Proc->useStd?Table->Fields:Proc->Fields, Proc->useStd?1:0);
   else if (Proc->noFields > 0)
   {

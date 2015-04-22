@@ -5,7 +5,7 @@
 static const char* outDirName = "";
 static const char* inListName = "";
 static const char* whitespace = " ;\r\n\"";
-static const char* addToList =
+static const char* ADD_TO_LIST =
   "#define ADD_TO_LIST(POINTER, TYPE, DATA, INDEX, DELTA) do {\\\n"
   "  if (INDEX % DELTA == 0)\\\n"
   "    POINTER = (TYPE*)realloc(POINTER, sizeof(DATA)*(INDEX + DELTA));\\\n"
@@ -13,8 +13,8 @@ static const char* addToList =
   "  } while(0)\n\n";
 
 ARG argtab[] =
-{ {'o', STRING,  (int*) &outDirName, "Output Directory"}
-, {'f', STRING,  (int*) &inListName, "Input file list"} 
+{ {'o', STRING,  (int*) &outDirName,    "Output Directory"}
+, {'f', STRING,  (int*) &inListName,    "Input file list"} 
 };
 #define TABSIZE (sizeof(argtab) / sizeof(ARG))
 
@@ -113,7 +113,7 @@ static void doStructField(FILE* ofile, PSqlField field)
   }
 }
 
-static void doQueryStructs(FILE* ofile, PSqlQuery query)
+static void doQueryStructs(FILE* ofile, PSqlQuery query, const char* table, bool isStd)
 {
   int f;
   fprintf(ofile, "typedef struct\n");
@@ -149,7 +149,10 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query)
     }
     fprintf(ofile, "  } ind;\n");
   }
-  fprintf(ofile, "} %sRec, *P%sRec;\n\n", query->Name, query->Name);
+  if (isStd == true)
+    fprintf(ofile, "} %sRec, *P%sRec;\n\n", table, table);
+  else
+    fprintf(ofile, "} %sRec, *P%sRec;\n\n", query->Name, query->Name);
   if (hasDynamic == false)
     return;
   fprintf(ofile, "inline char* DYNAMIC(%sRec &rec, const char* name)\n{\n"
@@ -169,6 +172,30 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query)
                  "}\n\n");
 }
 
+static bool queryIsStd(PSqlQuery query)
+{
+  char *result;
+  result = strstr(query->Name, "Insert"); 
+  if (result != 0 && strlen(result) == 6) 
+    return true;
+  result = strstr(query->Name, "Update"); 
+  if (result != 0 && strlen(result) == 6) 
+    return true;
+  result = strstr(query->Name, "SelectOne"); 
+  if (result != 0 && strlen(result) == 9) 
+    return true;
+  result = strstr(query->Name, "SelectOneUpd"); 
+  if (result != 0 && strlen(result) == 12) 
+    return true;
+  result = strstr(query->Name, "SelectAll"); 
+  if (result != 0 && strlen(result) == 9) 
+    return true;
+  result = strstr(query->Name, "SelectAllUpd"); 
+  if (result != 0 && strlen(result) == 12) 
+    return true;
+  return false;
+}
+
 static int doHeader(SqlSO& sqlSO, const char* inName)
 {
   int result = COMPLETED_OK;
@@ -178,11 +205,19 @@ static int doHeader(SqlSO& sqlSO, const char* inName)
   AutoFILE out(outName, "wt");
   fprintf(out.file, "#ifndef _%s_H_\n", ax.name);
   fprintf(out.file, "#define _%s_H_\n\n", ax.name);
+  bool hasStd = false;
   for (int q = 0; q < sqlSO.noQueries; q++)
   {
     PSqlQuery query = sqlSO.queries[q];
+    bool isStd = queryIsStd(query);
     if (query->isSql)
-      doQueryStructs(out.file, query);
+    {
+      if (isStd == true && hasStd == true)
+        continue;
+      if (isStd == true)
+        hasStd = true;
+      doQueryStructs(out.file, query, sqlSO.table, isStd);
+    }
   }
   fprintf(out.file, "#endif\n");
   return result;
@@ -249,13 +284,16 @@ static void doCodeField(FILE* ofile, PSqlField field)
     fprintf(ofile, "  short int *%s_ind = &rec->ind.%s;\n", name, name);
 }
 
-static void doQueryFetch(FILE* ofile, PSqlQuery query
+static void doSingle(FILE* ofile, PSqlQuery query
+  , const char *name
   , bool useInds
   , bool hasDynamic
   )
 {
   int f;
-  fprintf(ofile, "bool %s(P%sRec rec)\n{\n", query->Name, query->Name);
+  fprintf(ofile, "bool %s(P%sRec rec)\n{\n"
+               , query->Name, name
+               );
   for (f=0; f<query->NoFields; f++)
   {
     PSqlField field = &query->Fields[f];
@@ -264,14 +302,15 @@ static void doQueryFetch(FILE* ofile, PSqlQuery query
   fprintf(ofile, "}\n\n");
 }
 
-static void doQueryMultiFetch(FILE* ofile, PSqlQuery query
+static void doManyQuery(FILE* ofile, PSqlQuery query
+  , const char *name
   , bool useInds
   , bool hasDynamic
   )
 {
   int f;
-  fprintf(ofile, "void %sExec(P%sRec rec)\n{\n"
-               , query->Name, query->Name
+  fprintf(ofile, "void %s_Exec(P%sRec rec)\n{\n"
+               , query->Name, name
                );
   for (f=0; f<query->NoFields; f++)
   {
@@ -279,30 +318,36 @@ static void doQueryMultiFetch(FILE* ofile, PSqlQuery query
     doCodeField(ofile, field);
   }
   fprintf(ofile, "}\n\n");
-  fprintf(ofile, "bool %sFetch(P%sRec rec)\n{\n"
-               , query->Name, query->Name
+  fprintf(ofile, "bool %s_Fetch(P%sRec rec)\n{\n"
+               , query->Name, name
                );
+  for (f=0; f<query->NoFields; f++)
+  {
+    PSqlField field = &query->Fields[f];
+    doCodeField(ofile, field);
+  }
+  fprintf(ofile, "  return false;\n");
   fprintf(ofile, "}\n\n");
   fprintf(ofile, "int %s(P%sRec rec, P%sRec* recs)\n{\n"
-               , query->Name, query->Name, query->Name
+               , query->Name, name
+               , name
                );
-  fprintf(ofile, "  %sExec(rec);\n", query->Name);
-  fprintf(ofile, "  while (true)\n");
-  fprintf(ofile, "  {\n");
-  fprintf(ofile, "    if (%sFetch(rec) == false)", query->Name);
-  fprintf(ofile, "      break;\n");
-  fprintf(ofile, "    //ADDLIST()#;\n");
-  fprintf(ofile, "  }\n");
+  fprintf(ofile, "  int noRecs = 0;\n");
+  fprintf(ofile, "  %s_Exec(rec);\n", query->Name);
+  fprintf(ofile, "  while (%s_Fetch(rec))\n", query->Name);
+  fprintf(ofile, "    ADD_TO_LIST(recs, P%sRec, rec, noRecs, 32);\n", query->Name);
+  fprintf(ofile, "  return noRecs;\n");
   fprintf(ofile, "}\n\n");
 }
 
-static void doQueryAction(FILE* ofile, PSqlQuery query
+static void doAction(FILE* ofile, PSqlQuery query
+  , const char *name
   , bool useInds
   , bool hasDynamic
   )
 {
   int f;
-  fprintf(ofile, "void %s(P%sRec rec)\n{\n", query->Name, query->Name);
+  fprintf(ofile, "void %s(P%sRec rec)\n{\n", query->Name, name);
   for (f=0; f<query->NoFields; f++)
   {
     PSqlField field = &query->Fields[f];
@@ -311,11 +356,16 @@ static void doQueryAction(FILE* ofile, PSqlQuery query
   fprintf(ofile, "}\n\n");
 }
 
-static void doQueryCode(FILE* ofile, PSqlQuery query)
+static void doQueryCode(FILE* ofile, PSqlQuery query, const char* table, bool isStd)
 {
   int f;
   bool useInds = false;
   bool hasDynamic = false;
+  const char *name;
+  if (isStd)
+    name = table;
+  else
+    name = query->Name;
   for (f=0; f<query->NoFields; f++)
   {
     PSqlField field = &query->Fields[f];
@@ -326,17 +376,17 @@ static void doQueryCode(FILE* ofile, PSqlQuery query)
       continue;
     hasDynamic = true;
   }
-  if (query->isFetch)
+  if (query->isSingle)
   {
-    doQueryFetch(ofile, query, useInds, hasDynamic);
+    doSingle(ofile, query, name, useInds, hasDynamic);
     return;
   }
-  if (query->isMultiFetch)
+  if (query->isManyQuery)
   {
-    doQueryMultiFetch(ofile, query, useInds, hasDynamic);
+    doManyQuery(ofile, query, name, useInds, hasDynamic);
     return;
   }
-  doQueryAction(ofile, query, useInds, hasDynamic);
+  doAction(ofile, query, name, useInds, hasDynamic);
 }
 
 static int doCode(SqlSO& sqlSO, const char* inName)
@@ -346,12 +396,14 @@ static int doCode(SqlSO& sqlSO, const char* inName)
   SqlSO::makeOutName(outName, sizeof(outName), inName, ".pc", outDirName);
   AutoXdir ax(outName);  
   AutoFILE out(outName, "wt");
-  fprintf(out.file, "#include \"%s.h\"\n", ax.name);
+  fprintf(out.file, "#include \"%s.h\"\n\n", ax.name);
+  fprintf(out.file, "%s", ADD_TO_LIST);
   for (int q = 0; q < sqlSO.noQueries; q++)
   {
     PSqlQuery query = sqlSO.queries[q];
+    bool isStd = queryIsStd(query);
     if (query->isSql)
-      doQueryCode(out.file, query);
+      doQueryCode(out.file, query, sqlSO.table, isStd);
   }
   return result;
 }

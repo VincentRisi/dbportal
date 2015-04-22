@@ -1532,18 +1532,18 @@ ReUse
 OptMultiSingle
 :
 {
-  Proc.isMultiFetch = 1;
-  Proc.isFetch = 0;
+  Proc.isManyQuery = 1;
+  Proc.isSingle = 0;
 }
 | '(' sqldefMULTIPLE ')'
 {
-  Proc.isMultiFetch = 1;
-  Proc.isFetch = 0;
+  Proc.isManyQuery = 1;
+  Proc.isSingle = 0;
 }
 | '(' sqldefSINGLE   ')'
 {
-  Proc.isMultiFetch = 0;
-  Proc.isFetch = 1;
+  Proc.isManyQuery = 0;
+  Proc.isSingle = 1;
 };
 
 SetStateOutput
@@ -2398,11 +2398,11 @@ static void SetView(char *s)
 static void AddProc(void)
 {
   Proc.extProc = ExtState;
-  if (Proc.isMultiFetch && !Proc.isSql)
+  if (Proc.isManyQuery && !Proc.isSql)
   {
-    if (Proc.isMultiFetch == 1)
+    if (Proc.isManyQuery == 1)
       yyreport(CODING_ERROR, "Only SQL CODE procs may use (multiple)\n");
-    Proc.isMultiFetch = 0;
+    Proc.isManyQuery = 0;
   }
   AddList(Table->Procs, TYYProc, Proc, Table->noProcs, 4);
 }
@@ -2597,7 +2597,7 @@ static void CreateCount(void)
   SetFieldType(ftypeInt, 0);
   AddOutputField(strdup("NoOf"));
   Proc.isSql = 1;
-  Proc.isFetch = 1;
+  Proc.isSingle = 1;
   Proc.isStd = 1;
   LineState = stateCode;
   sprintf(Work, "select count(*) from %s\n", Table->Name);
@@ -2811,7 +2811,7 @@ static void CreateSelectAll(int Update)
   else
     SetProc(strdup("SelectAll"));
   Proc.isSql = 1;
-  Proc.isMultiFetch = 1; /*(Table->hasImage == 1 || Table->hasLOB == 1) ? 0 :*/
+  Proc.isManyQuery = 1; /*(Table->hasImage == 1 || Table->hasLOB == 1) ? 0 :*/
   Proc.useStd = 1;
   Proc.isStd = 1;
   LineState = stateCode;
@@ -2842,7 +2842,7 @@ static void CreateSelectPlus(int size)
   int32  i, first;
   SetProc(strdup("SelectPlus"));
   Proc.isSql = 1;
-  Proc.isMultiFetch = 1;
+  Proc.isManyQuery = 1;
   Proc.isStd = 1;
   Proc.hasImage = Table->hasImage;
   Proc.hasLOB = Table->hasLOB;
@@ -2874,7 +2874,7 @@ static void CreateSelectOne(int Update)
   else
     SetProc(strdup("SelectOne"));
   Proc.isSql = 1;
-  Proc.isFetch = 1;
+  Proc.isSingle = 1;
   Proc.useStd = 1;
   Proc.isStd = 1;
   LineState = stateCode;
@@ -3070,7 +3070,7 @@ static void CreateExists(void)
   SetFieldType(ftypeInt, 0);
   AddOutputField(strdup("Count"));
   Proc.isSql = 1;
-  Proc.isFetch = 1;
+  Proc.isSingle = 1;
   Proc.isStd = 1;
   LineState = stateCode;
   sprintf(Work, "select count(*) from %s\n", Table->Name);

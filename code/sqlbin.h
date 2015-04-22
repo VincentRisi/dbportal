@@ -47,8 +47,8 @@ struct SqlQuery
   ushort    Size;
   pchar     Command;
   ushort    isSql;
-  ushort    isFetch;
-  ushort    isMultiFetch;
+  ushort    isSingle;
+  ushort    isManyQuery;
   ushort    isNullEnabled;
 };
 

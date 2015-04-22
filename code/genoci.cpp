@@ -1954,8 +1954,8 @@ static void GenerateBinSql(PYYTable Table, PYYProc Proc)
   free(AB);
   putUInt16(( (Proc->noBinds & 0x0FFF)
             | (Proc->isSql   ? 0x8000 : 0)
-            | (Proc->isFetch ? 0x4000 : 0)
-            | (Proc->isMultiFetch ? 0x2000 : 0)
+            | (Proc->isSingle ? 0x4000 : 0)
+            | (Proc->isManyQuery ? 0x2000 : 0)
             | (Table->isNullEnabled ? 0x1000 : 0)), BinFile);
   AB = (char *)malloc(512);
   for (j=0; j<Proc->noBinds; j++)

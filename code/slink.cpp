@@ -126,8 +126,8 @@ void LoadInFile(const char *InFileName, ushort &slink)
     Query.Name = getString(InFile);
     Query.NoFields = getUInt16(InFile);
     Query.isSql = Query.NoFields & 0x8000;
-    Query.isFetch = Query.NoFields & 0x4000;
-    Query.isMultiFetch = Query.NoFields & 0x2000;
+    Query.isSingle = Query.NoFields & 0x4000;
+    Query.isManyQuery = Query.NoFields & 0x2000;
     Query.isNullEnabled = Query.NoFields & 0x1000;
     Query.NoFields &= 0x0FFF;
     if (Query.NoFields)
@@ -252,8 +252,8 @@ void StoreBinFile(ushort sign)
     putString(Queries[i]->Name,     BinFile);
     putUInt16(Queries[i]->ServerNo, BinFile);
     putUInt16(Queries[i]->SchemaNo | Queries[i]->isSql
-                                   | Queries[i]->isFetch
-                                   | Queries[i]->isMultiFetch
+                                   | Queries[i]->isSingle
+                                   | Queries[i]->isManyQuery
                                    | Queries[i]->isNullEnabled, BinFile);
     putUInt16(Queries[i]->TableNo,  BinFile);
     putUInt16(Queries[i]->NoFields, BinFile);

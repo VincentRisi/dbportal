@@ -1265,7 +1265,7 @@ static void GenerateCSTableProcs(PYYTable Table)
     for (i=0; i<Table->noProcs; i++)
     {
       PYYProc Proc = &Table->Procs[i];
-      if (Proc->isData || Proc->isFetch)
+      if (Proc->isData || Proc->isSingle)
         continue;
       if (Table->TargetCSAdoNet == 0 && (Proc->extProc & doCSADONET) == 0)
         continue;
@@ -1285,7 +1285,7 @@ static void GenerateCSTableProcs(PYYTable Table)
     for (i=0; i<Table->noProcs; i++)
     {
       PYYProc Proc = &Table->Procs[i];
-      if (Proc->isData || Proc->isStd || Proc->isFetch)
+      if (Proc->isData || Proc->isStd || Proc->isSingle)
         continue;
       if (Table->TargetCSAdoNet == 0 && (Proc->extProc & doCSADONET) == 0)
         continue;
@@ -1307,7 +1307,7 @@ static void GenerateCSTableProcs(PYYTable Table)
       else if (Proc->useStd)// || Proc->isStd)
       {
         CSNetCommand(Table, Proc);
-        if (Proc->isSql && Proc->isFetch)
+        if (Proc->isSql && Proc->isSingle)
           CSNetSingleProc(Table, Proc);
         else if (Proc->isSql && Proc->noOutputs > 0)
           CSNetMultiProc(Table, Proc, TableName);
@@ -1405,12 +1405,12 @@ static void GenerateCSProcProcs(PYYTable Table, PYYProc Proc)
     return;
   if (Table->TargetCSAdoNet == 0 && (Proc->extProc & doCSADONET) == 0)
     return;
-  if (Proc->isSql && !Proc->isFetch && Proc->noOutputs > 0)
+  if (Proc->isSql && !Proc->isSingle && Proc->noOutputs > 0)
     isArrayed = true;
   sprintf(work, "%s%s", TableName, Proc->Name);
   GenerateCSClassTop(work, isArrayed);
   CSNetCommand(Table, Proc);
-  if (Proc->isSql && Proc->isFetch)
+  if (Proc->isSql && Proc->isSingle)
   {
     CSNetSingleProc(Table, Proc);
   }

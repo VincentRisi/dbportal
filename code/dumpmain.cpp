@@ -70,14 +70,14 @@ void DumpSOFile(pchar InFileName, ushort &slink)
     Query.Name = getString(InFile);
     Query.NoFields = getUInt16(InFile);
     Query.isSql = Query.NoFields & 0x8000;
-    Query.isFetch = Query.NoFields & 0x4000;
-    Query.isMultiFetch = Query.NoFields & 0x2000;
+    Query.isSingle = Query.NoFields & 0x4000;
+    Query.isManyQuery = Query.NoFields & 0x2000;
     Query.isNullEnabled = Query.NoFields & 0x1000;
     Query.NoFields &= 0x0FFF;
     printf("%2d: %-32s %d %s%s%s\n"
           , i+1, Query.Name, Query.NoFields
-          , Query.isFetch ? " Fetch" : ""
-          , Query.isMultiFetch ? " MultiFetch" : ""
+          , Query.isSingle ? " Fetch" : ""
+          , Query.isManyQuery ? " ManyQuery" : ""
           , Query.isNullEnabled ? " NullEnabled" : ""
           );
     if (Query.NoFields)

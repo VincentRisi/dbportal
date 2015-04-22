@@ -625,7 +625,7 @@ static PSqlCursor _SqlOpen(PSqlCB SqlCB, PSqlQuery SqlQuery, void* Data)
   SqlCursor->Data = Data;
 #endif
   SqlCursor->Command = FixupCommand(SqlQuery, (pchar) SqlCursor->Data);
-  if (SqlQuery->isMultiFetch)
+  if (SqlQuery->isManyQuery)
   {
     for (i=0, size=0; i<SqlQuery->NoFields; i++)
     {
@@ -643,12 +643,12 @@ static PSqlCursor _SqlOpen(PSqlCB SqlCB, PSqlQuery SqlQuery, void* Data)
       SqlCursor->BufferSize = size*no;
       SqlCursor->Buffer = calloc(no, size);
       if (SqlCursor->Buffer == 0)
-        SqlQuery->isMultiFetch = 0;
+        SqlQuery->isManyQuery = 0;
     }
     else
-      SqlQuery->isMultiFetch = 0;
+      SqlQuery->isManyQuery = 0;
   }
-  if (!SqlQuery->isMultiFetch)
+  if (!SqlQuery->isManyQuery)
     SqlCursor->RowsCount = 1;
   if (SqlQuery->NoFields)
   {
@@ -839,7 +839,7 @@ static PSqlCursor _SqlOpen(PSqlCB SqlCB, PSqlQuery SqlQuery, void* Data)
       }
       else
       {
-        if (SqlQuery->isMultiFetch)
+        if (SqlQuery->isManyQuery)
         {
           IndData = (pchar)((pchar)SqlCursor->Buffer+size);
           size += (SqlCursor->RowsCount*Field->Size);
@@ -976,7 +976,7 @@ static int DoTheFetch(PSqlCursor SqlCursor)
 {
   PSqlQuery SqlQuery = SqlCursor->SqlQuery;
   SqlCursor->Error = SqlApiOK;
-  if (SqlQuery->isMultiFetch)
+  if (SqlQuery->isManyQuery)
   {
     if (SqlCursor->RowsDone >= SqlCursor->RowsRead)
     {
@@ -1191,12 +1191,12 @@ int APPLAPI SqlExec(PSqlCursor SqlCursor)
     SqlCursor->Error = SqlApiExecErr;
     goto Return;
   }
-  if (SqlQuery->isMultiFetch)
+  if (SqlQuery->isManyQuery)
   {
     SqlCursor->RowsDone = 0;
     SqlCursor->RowsRead = 0;
   }
-  if (SqlQuery->isFetch)
+  if (SqlQuery->isSingle)
   {
     if (DoFetch(SqlCursor))
     {

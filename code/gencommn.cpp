@@ -734,7 +734,7 @@ static void GenerateVB5Table(PYYTable Table)
     for (i=0; i<Table->noProcs; i++)
     {
       PYYProc Proc = &Table->Procs[i];
-      if (Proc->isData || Proc->isStd || Proc->isFetch)
+      if (Proc->isData || Proc->isStd || Proc->isSingle)
         continue;
       if (Proc->useStd)
         isArrayed = VB5CursorVars(Proc->Name);
@@ -784,7 +784,7 @@ static void GenerateVB5Table(PYYTable Table)
         VB5NoIOProc(Table, Proc->Name);
       else if (Proc->useStd)
       {
-        if (Proc->isSql && Proc->isFetch)
+        if (Proc->isSql && Proc->isSingle)
           VB5SingleProc(Table, Proc->Name, isArrayed);
         else if (Proc->isSql && Proc->noOutputs > 0)
           VB5MultiProc(Table, Proc->Name);
@@ -933,7 +933,7 @@ static void GenerateVB5Proc(PYYTable Table, PYYProc Proc)
     fprintf(VBFile, CrVBFiller, i, padvalue - pad);
   fprintf(VBFile, CrVBEnd);
   bool isArrayed = false;
-  if (Proc->isSql && Proc->noOutputs > 0 && !Proc->isFetch)
+  if (Proc->isSql && Proc->noOutputs > 0 && !Proc->isSingle)
     isArrayed = VB5CursorVars(Proc->Name);
   VB5Rec(isArrayed);
   fprintf(VBFile, "Private Sub Class_Initialize()\n");
@@ -955,7 +955,7 @@ static void GenerateVB5Proc(PYYTable Table, PYYProc Proc)
     VB5GetLet(VB5GetFieldType(Field, isArrayed), VB5FieldIsString(Field),
               NameOf(Field), VB5SetFieldType(Field, isArrayed), isArrayed);
   }
-  if (Proc->isSql && Proc->isFetch)
+  if (Proc->isSql && Proc->isSingle)
     VB5SingleProc(Table, Proc->Name, isArrayed);
   else if (Proc->isSql && Proc->noOutputs > 0)
     VB5MultiProc(Table, Proc->Name);
@@ -986,7 +986,7 @@ static void GenerateVBExtendedProcNoRec(PYYTable Table, const char *ProcName)
 
 static void GenerateVBExtendedProc(PYYTable Table, PYYProc Proc)
 {
-  if (Proc->isSql && !Proc->isFetch && Proc->noOutputs > 0)
+  if (Proc->isSql && !Proc->isSingle && Proc->noOutputs > 0)
     return;
   if (Proc->isData)
     return;
@@ -1440,7 +1440,7 @@ static void GeneratePASIntProc(PYYTable Table, PYYProc Proc)
     return;
   if (Proc->isStd)
     return;
-  if (Proc->isSql && Proc->isFetch == 0 && Proc->noOutputs > 0)
+  if (Proc->isSql && Proc->isSingle == 0 && Proc->noOutputs > 0)
     GeneratePASIntQuery(Table, Proc->Name, Proc->useStd ? 0 : 1);
   else if (Proc->noFields > 0)
     GeneratePASIntRec(Table, Proc->Name, Proc->useStd ? 0 : 1);
@@ -1454,7 +1454,7 @@ static void GeneratePASImpProc(PYYTable Table, PYYProc Proc)
     return;
   if (Proc->isStd)
     return;
-  if (Proc->isSql && Proc->isFetch == 0 && Proc->noOutputs > 0)
+  if (Proc->isSql && Proc->isSingle == 0 && Proc->noOutputs > 0)
     GeneratePASImpQuery(Table, Proc->Name, Proc->useStd ? 0 : 1);
   else if (Proc->noFields > 0)
     GeneratePASImpRec(Table, Proc->Name, Proc->useStd ? 0 : 1);
@@ -1618,7 +1618,7 @@ static void GenerateHeadTableExtended(PYYTable Table)
       continue;
     if (Proc->useStd)
     {
-      if (Proc->isFetch != 0)
+      if (Proc->isSingle != 0)
       {
         GenerateReadOne(Proc->noFields, Proc->Fields,
                         Table, Proc->Name, 0);
@@ -1714,7 +1714,7 @@ static void GenerateHeadTableExtendedOthers(PYYTable Table)
       continue;
     if (Proc->useStd)
     {
-      if (!Proc->isFetch && Proc->noOutputs)
+      if (!Proc->isSingle && Proc->noOutputs)
       {
         fprintf(HeaderFile, Table->LittleTrue ? CrQueryLittle : CrQuery,
                                      US, NameOf(Table), US, Proc->Name,
@@ -1736,7 +1736,7 @@ static void GenerateHeadProcExtended(PYYTable Table, PYYProc Proc)
   if (Table->CppHeader == 0)
     fprintf(HeaderFile, "  #if defined(_DBPORTAL_H_)\n");
   fprintf(HeaderFile, CrHDefault, US, NameOf(Table), US, Proc->Name, "");
-  if (Proc->isFetch)
+  if (Proc->isSingle)
   {
     GenerateReadOne(Proc->noFields, Proc->Fields,
                     Table, Proc->Name, 0);
@@ -1785,7 +1785,7 @@ static void GenerateHeadProcExtended(PYYTable Table, PYYProc Proc)
 
 static void GenerateHeadProcOthers(PYYTable Table, PYYProc Proc)
 {
-  if (Proc->isSql && !Proc->isFetch && Proc->noOutputs)
+  if (Proc->isSql && !Proc->isSingle && Proc->noOutputs)
   {
     if (Table->CppHeader == 0)
       fprintf(HeaderFile, "#if defined(_DBPORTAL_H_)\n");
