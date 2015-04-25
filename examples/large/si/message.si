@@ -52,12 +52,10 @@ SQL CODE
      ,Content
    FROM
      Message m
-   WHERE
-          m.ID = :Id
+   WHERE  m.ID = :Id
       AND m.Queueid = :QueueID
       AND m.Status = :Status
       for update
-      -- $x(12)
 ENDCODE
 
 PROC Queued

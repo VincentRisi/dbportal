@@ -1,85 +1,109 @@
 
 #include "sqltok.h"
 
-#define sqltokALPHA "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define sqltokDIGIT "0123456789"
-#define sqltokALPHANUM sqltokALPHA sqltokDIGIT
-#define sqltokALPHANUMPLUS sqltokALPHANUM "_$#"
-#define sqltokDIGITPLUS sqltokDIGIT ".+-eE"
+#define SQLTOK_ALPHA "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define SQLTOK_DIGIT "0123456789"
+#define SQLTOK_ALPHA_DIGIT SQLTOK_ALPHA SQLTOK_DIGIT
+#define SQLTOK_ALPHA_DIGIT_PLUS SQLTOK_ALPHA_DIGIT "_$#"
+#define SQLTOK_DIGIT_PLUS SQLTOK_DIGIT ".+-eE"
 
 inline int alpha(char ch)
 {
-  return (ch && strchr(sqltokALPHA, ch) != 0) ? 1 : 0;
+  return (ch && strchr(SQLTOK_ALPHA, ch) != 0) ? 1 : 0;
 }
 
 inline int alphaNum(char ch)
 {
-  return (ch && strchr(sqltokALPHANUM, ch) != 0) ? 1 : 0;
+  return (ch && strchr(SQLTOK_ALPHA_DIGIT, ch) != 0) ? 1 : 0;
 }
 
 inline int alphaNumPlus(char ch)
 {
-  return (ch && strchr(sqltokALPHANUMPLUS, ch) != 0) ? 1 : 0;
+  return (ch && strchr(SQLTOK_ALPHA_DIGIT_PLUS, ch) != 0) ? 1 : 0;
 }
 
 inline int digit(char ch)
 {
-  return (ch && strchr(sqltokDIGIT, ch) != 0) ? 1 : 0;
+  return (ch && strchr(SQLTOK_DIGIT, ch) != 0) ? 1 : 0;
 }
 
 inline int digitPlus(char ch)
 {
-  return (ch && strchr(sqltokDIGITPLUS, ch) != 0) ? 1 : 0;
+  return (ch && strchr(SQLTOK_DIGIT_PLUS, ch) != 0) ? 1 : 0;
 }
 
-pchar SqlToken(pchar Source, pchar Token, int TokenSize)
+pchar SqlToken(pchar source, pchar token, int token_length)
 {
   int n;
-  pchar Result = Source+1;
-  switch(Source[0])
+  pchar result = source+1;
+  switch(*source)
   {
   case ' ':
   case '\t':
-    while (Result[0] == ' ' || Result[0] == '\t')
-      Result++;
+    while (*result == ' ' || *result == '\t')
+      result++;
     break;
   case ':':
   case '$':
-    if (Result[0] == Source[0])
+    if (*result == *source)
       break;
-    if (alpha(Result[0]))
+    if (alpha(*result))
     {
-      Result++;
-      while (alphaNumPlus(Result[0]))
-        Result++;
+      result++;
+      while (alphaNumPlus(*result))
+        result++;
     }
     break;
   case '\'':
   case '\"':
-    while (Result[0] && Result[0] != Source[0])
-      Result++;
-    if (Result[0] == Source[0])
-      Result++;
+    while (*result && *result != *source)
+      result++;
+    if (*result == *source)
+      result++;
     break;
-  default:
-    if (alpha(Source[0]))
+  case '-':
+    if (*result == '-')
     {
-      while (alphaNumPlus(Result[0]))
-        Result++;
+      result++;
+      while (*result && *result != '\n')
+        result++;
+      if (*result)
+        result++;
+      source = result;
       break;
     }
-    if (digit(Source[0]))
+    break;  
+  case '/':
+    if (*result == '*')
     {
-      while (digitPlus(Result[0]))
-        Result++;
+      result++;
+      while (result[0] && result[0] != '*' && result[1] && result[1] != '/')
+        result++;
+      if (result[0] && result[1])
+        result += 2;
+      source = result;
+      break;
+    }
+    break;  
+  default:
+    if (alpha(*source))
+    {
+      while (alphaNumPlus(*result))
+        result++;
+      break;
+    }
+    if (digit(*source))
+    {
+      while (digitPlus(*result))
+        result++;
       break;
     }
     break;
   }
-  n = Result - Source;
-  if (n > TokenSize-1)
-    n = TokenSize-1;
-  strncpy(Token, Source, n);
-  Token[n] = 0;
-  return Result;
+  n = result - source;
+  if (n > token_length-1)
+    n = token_length-1;
+  strncpy(token, source, n);
+  token[n] = 0;
+  return result;
 }

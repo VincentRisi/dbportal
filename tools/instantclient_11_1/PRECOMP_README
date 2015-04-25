@@ -1,0 +1,73 @@
+PRECOMP Package Information
+===========================
+
+Tue Nov 25 03:10:23 PST 2008
+
+Client Shared Library 64-bit - 11.1.0.7.0
+
+System name:	Linux
+Release:	2.6.9-34.0.1.0.11.ELsmp
+Version:	#1 SMP Mon Dec 4 22:20:39 UTC 2006
+Machine:	x86_64
+
+==============================================================================
+
+PRECOMP Instant Client (IC) Package (precomp.zip) contains following
+components:
+  i) "proc" binary and related files to precompile a Pro*C application
+ ii) sample configuration file, proc demo program and a demo make file for
+     building proc demos and in general any proc application.
+
+Installing PRECOMP IC Package:
+------------------------------
+Prerequisites: 
+Please unzip following .zip files before unzipping precomp.zip:
+
+    a) For runtime (running Pro*C applications)
+          - Unzip basic.zip (not required if installed instantclient through
+                             Oracle Universal Installer)
+
+    b) For developing Pro*C applications 
+          - Unzip basic.zip (not required if installed instantclient through
+                             Oracle Universal Installer)
+          - Unzip sdk.zip
+
+Notes: 
+    1) Runtime libraries are available in 
+           instantclient<_VV_v>/
+    2) proc binary is available in 
+           instantclient<_VV_v>/
+    3) ott binary is available in
+           instantclient<_VV_v>/sdk/ott/
+    4) All header files required for precompilation are available at
+           instantclient<_VV_v>/sdk/include/
+    5) Pro*C demo makefile and sample Pro*C application is available at
+           instantclient<_VV_v>/sdk/demo/
+    6) Sample configuration file (pcscfg.cfg) is available at
+           instantclient<_VV_v>/sdk/demo/
+    7) In instant client environment, ProC would look for the default     
+       configuration file in instantclient<_VV_v>/precomp/admin/pcscfg.cfg.     
+       Instant client installation and unzipping will not create this 
+       directory structure. So, to use the proper configuration file 
+       either manually create this directory structure and place the default 
+       configuration file there or use 'config=' precompiler option to pick 
+       the user defined config file.
+  
+Legend:
+    VV - Major Oracle version number
+     v - Minor Oracle version number
+   (Ex:  For the release 11.1, VV = 11 and v = 1)
+
+
+Configurations Supported:
+-------------------------
+   Platforms              Runtime      Precompile
+   ~~~~~~~~~~~~~~~~~~~~~  ~~~~~~~~~~~  ~~~~~~~~~~~
+   Linux 32bit (RHEL-4)   Proc:  Yes   proc:  Yes
+                          procob: No   procob: No
+
+   Windows 32bit          Proc:  Yes   proc:  Yes
+                          procob: No   procob: No
+
+
+==============================================================================

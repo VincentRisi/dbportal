@@ -4,6 +4,7 @@
 
 #include "loadso.h"
 #include "getargs.h"
+#include "sqltok.h"
 
 int main(int argc, char *argv[]);
 
