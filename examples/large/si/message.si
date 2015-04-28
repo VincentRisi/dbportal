@@ -55,6 +55,7 @@ SQL CODE
    WHERE  m.ID = :Id
       AND m.Queueid = :QueueID
       AND m.Status = :Status
+      $EXTRA
       for update
 ENDCODE
 
@@ -63,21 +64,6 @@ INPUT
   QueueID       char(24)
   Status        tinyint
 OUTPUT (MULTIPLE)
-  Id            int
-SQL CODE
-   SELECT
-      Id
-   FROM
-     Message m
-   WHERE
-      Queueid = :QueueID AND Status = :Status
-ENDCODE
-
-PROC Queued2
-INPUT 
-  QueueID       char(24)
-  Status        tinyint
-OUTPUT
   Id            int
 SQL CODE
    SELECT
