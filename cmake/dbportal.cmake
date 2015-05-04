@@ -135,6 +135,96 @@ function (dbportal projectName binFilename siFiles)
   )
 endfunction()
 
+function (dbportal_genproc projectName siFiles)
+  source_group ("SI Files"  REGULAR_EXPRESSION ".*[.]si$")
+  set (direxts)
+  # We will store switches to file to avoid over long command line
+  set (switchesList ${CMAKE_CURRENT_BINARY_DIR}/${projectName}.switches)
+  file (WRITE ${switchesList} "")
+  foreach (arg ${ARGN})
+    string(REPLACE "|" ";" arg2 ${arg})
+    dbportal_split("${arg2}")
+    list (LENGTH groups noOf)
+    if (3 LESS noOf)
+      # this case has VS source group plus dir ext files
+      list (GET groups 0 title)
+      list (GET groups 1 mask)
+      source_group ("${title}" REGULAR_EXPRESSION "${mask}")
+      list (GET groups 2 dir)
+      list (GET groups 3 ext)
+      list (APPEND direxts "${dir}|${ext}")
+    elseif (1 LESS noOf)
+      # this case dir ext files
+      list (GET groups 0 dir)
+      list (GET groups 1 ext)
+      list (APPEND direxts "${dir}|${ext}")
+    endif ()
+    # switch may be multipart with semicolon separates
+    foreach (sw ${switch})
+      file (APPEND ${switchesList} "${sw}\n")
+    endforeach ()  
+  endforeach ()
+  set (allFiles)
+  set (soFiles)
+  set (pcFiles)
+  foreach (siFile ${siFiles})
+    get_filename_component (temp ${siFile} NAME)
+    string (TOLOWER ${temp} temp1)
+    get_filename_component (filename ${temp1} NAME_WE)
+    set (oFiles)
+    foreach (arg ${direxts})
+      string(REPLACE "|" ";" arg2 ${arg})
+      list (GET arg2 0 dir)
+      list (GET arg2 1 ext)
+      set (oFile ${dir}/${filename}.${ext})
+      list (APPEND pcFiles ${pcDir}/${filename}.pc)
+      list (APPEND pcFiles ${pcDir}/${filename}.h)
+      if (ext STREQUAL "so")
+        list (APPEND soFiles  "${oFile}")
+        list (APPEND oFiles   "${oFile}")
+      else ()
+        list (APPEND allFiles "${oFile}")
+        list (APPEND oFiles   "${oFile}")
+      endif ()  
+    endforeach()
+    add_custom_command (
+      OUTPUT  ${oFiles}
+      COMMAND ${pocioci} ${siFile} "-s${switchesList}"
+      DEPENDS ${siFile}
+      VERBATIM
+    )
+  endforeach()
+  list (LENGTH soFiles noOf)
+  if (0 LESS noOf)
+    set (soFileList ${CMAKE_CURRENT_BINARY_DIR}/${projectName}.sofiles)
+    #file (WRITE ${soFileList} "")
+    foreach (soFile ${soFiles})
+      #file (APPEND ${soFileList} "${soFile}\n")
+      get_filename_component (temp ${soFile} NAME)
+      string (TOLOWER ${temp} temp1)
+      get_filename_component (filename ${temp1} NAME_WE)
+      add_custom_command (
+        OUTPUT  ${pcDir}/${filename}.pc ${pcDir}/${filename}.h
+        COMMAND ${genproc} -o${pcDir} ${soFile}
+        DEPENDS ${soFile}
+      )
+    endforeach()
+    add_custom_target (${projectName} ALL
+      DEPENDS ${pcFiles}
+      SOURCES ${siFiles} ${pcFiles}
+    )
+  else ()
+    add_custom_target (${projectName} ALL
+      DEPENDS ${allFiles}
+      SOURCES ${siFiles} ${allFiles}
+    )
+  endif ()  
+  set_source_files_properties (
+    ${allFiles}
+    PROPERTIES GENERATED TRUE
+  )
+endfunction()
+
 function (jportal projectName siFiles)
   source_group ("SI Files"  REGULAR_EXPRESSION ".*[.]si$")
   set (switches)

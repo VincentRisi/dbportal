@@ -341,7 +341,7 @@ static char* makeCommand(char* work
   char sp[2]; 
   sp[0] = sp[1] = 0;
   int no, used = 0;
-  int bcount = 0;
+  int bcount = 0, begcount = 0;
   bool inSelect = false;
   dyns[0] = 0;
   while (true)
@@ -353,11 +353,17 @@ static char* makeCommand(char* work
     {
       if (*token == '(')
         bcount++;
+      else if (stricmp(token, "begin") == 0)
+        begcount++;
       else if (*token == ')')
         bcount--;
+      else if (stricmp(token, "end") == 0)
+        begcount--;
       if (bcount < 0)
         bcount = 0;
-      if (bcount == 0) 
+      if (begcount < 0)
+        begcount = 0;
+      if (bcount == 0 && begcount == 0) 
       {
         if (stricmp(token, "select") == 0)
           inSelect = true;
