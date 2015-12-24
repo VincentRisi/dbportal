@@ -15,7 +15,7 @@ sqlcode
     WHERE LOYALTY_INSTANCE_NO = :code_environment
     AND   LOYALTY_PROGRAM_NO  = :code_program
     AND   trunc(sysdate) BETWEEN EFF_FROM AND EFF_TO
-endcode  
+endcode
 
 proc MatrixGetLoookupVars
 input
@@ -39,7 +39,7 @@ sqlcode
     AND   ARCHIVE_STATE IS NULL
 endcode
 
-proc Sequences 
+proc Sequences
 output (single)
   reward_calc_seq_no   int
   reward_rollup_seq_no int
@@ -48,3 +48,4 @@ sqlcode
        , DLR.REWARD_ROLLUP_SEQ.nextval      reward_rollup_seq_no
     FROM    DUAL
 endcode
+

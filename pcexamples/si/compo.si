@@ -1,0 +1,63 @@
+server DHCB
+connect DLR/PASSWORD
+
+table Compo (null)
+
+proc PartnerFileReceiveInsert
+input
+  file_date       char[8]
+  file_name       char[30]
+output (single)
+  partner_file_id long
+sqlcode
+  insert into dlr.partner_file_recv
+  ( partner_file_id,
+    loyalty_instance_no,
+    loyalty_program_no,
+    file_type,
+    file_date,
+    file_sequence_no,
+    file_name,
+    import_date
+  )
+  values
+  ( dlr.dlr_generic_seq.nextval,
+    10,
+    8,
+    'FF_MCE_FILE',
+    to_date(:file_date, 'YYYYMMDD'),
+    1,
+    :file_name,
+    trunc(sysdate, 'DD')
+  )
+  returning partner_file_id into :partner_file_id
+endcode
+
+proc PartnerFileReceiveExists
+input
+  file_name       char[30]
+output (single)
+  no_of           int
+sqlcode
+  select count(*)
+  from   dlr.partner_file_recv
+  where  loyalty_instance_no = 10
+  and    loyalty_program_no = 8
+  and    file_type = 'FF_MCE_FILE'
+  and    file_name = :file_name
+endcode
+
+proc LookupList
+output (multiple)
+  compo_id char[10]
+  mnemonic char[10]
+sqlcode
+  select loyalty_code,
+         code_extra_info
+  from loyalty_code_lookup
+  where loyalty_code_type = 'COMPO_TO_ACTIVITY'
+  and loyalty_instance_no = 10
+  and loyalty_program_no = 8
+  order by 1
+endcode
+

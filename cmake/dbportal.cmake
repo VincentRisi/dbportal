@@ -3,7 +3,7 @@ function (pathed result ext_dir)
     if (${ARGN} STREQUAL REMOVE)
       file (GLOB remFiles ${ext_dir}/*.*)
       list (LENGTH remFiles count)
-      if (0 LESS count) 
+      if (0 LESS count)
         message (STATUS "Removing all files in ${ext_dir}")
         file (REMOVE ${remFiles})
       endif ()
@@ -16,9 +16,9 @@ endfunction ()
 # -- splits db portal switches based on the following rules
 #  1: switch                     -  "OneSQLScript=1"
 #  2: target|dir|ext             -  "SO|${soDir}|.so"
-#  3: target|dir|ext|group|mask  -  "C|${shDir}|.sh|SH Files|.*[.]sh$" 
-#     C|${shDir}|.sh      
-#     is changed to TargetC=1 CDir=${shDir} CExt=.sh 
+#  3: target|dir|ext|group|mask  -  "C|${shDir}|.sh|SH Files|.*[.]sh$"
+#     C|${shDir}|.sh
+#     is changed to TargetC=1 CDir=${shDir} CExt=.sh
 function (dbportal_split target_args)
   list (LENGTH target_args count)
   if (4 LESS count)
@@ -26,7 +26,7 @@ function (dbportal_split target_args)
     set (title ${arg})
     list (GET target_args 4 arg)
     set (mask ${arg})
-  endif ()  
+  endif ()
   if (2 LESS count)
     list (GET target_args 0 arg)
     set (target "Target${arg}=1")
@@ -37,7 +37,7 @@ function (dbportal_split target_args)
     list (GET target_args 2 arg)
     set (targetext "${name}Ext=${arg}")
     string (SUBSTRING ${arg} 1 -1 ext)
-  endif ()  
+  endif ()
   set (groups PARENT_SCOPE)
   if (1 EQUAL count)
     set (switch ${target_args}            PARENT_SCOPE)
@@ -77,7 +77,7 @@ function (dbportal projectName binFilename siFiles)
     # switch may be multipart with semicolon separates
     foreach (sw ${switch})
       file (APPEND ${switchesList} "${sw}\n")
-    endforeach ()  
+    endforeach ()
   endforeach ()
   set (allFiles)
   set (soFiles)
@@ -97,7 +97,7 @@ function (dbportal projectName binFilename siFiles)
       else ()
         list (APPEND allFiles "${oFile}")
         list (APPEND oFiles   "${oFile}")
-      endif ()  
+      endif ()
     endforeach()
     add_custom_command (
       OUTPUT  ${oFiles}
@@ -128,7 +128,7 @@ function (dbportal projectName binFilename siFiles)
       DEPENDS ${allFiles}
       SOURCES ${siFiles} ${allFiles}
     )
-  endif ()  
+  endif ()
   set_source_files_properties (
     ${allFiles}
     PROPERTIES GENERATED TRUE
@@ -162,7 +162,7 @@ function (dbportal_genproc projectName siFiles)
     # switch may be multipart with semicolon separates
     foreach (sw ${switch})
       file (APPEND ${switchesList} "${sw}\n")
-    endforeach ()  
+    endforeach ()
   endforeach ()
   set (allFiles)
   set (soFiles)
@@ -185,7 +185,7 @@ function (dbportal_genproc projectName siFiles)
       else ()
         list (APPEND allFiles "${oFile}")
         list (APPEND oFiles   "${oFile}")
-      endif ()  
+      endif ()
     endforeach()
     add_custom_command (
       OUTPUT  ${oFiles}
@@ -218,12 +218,87 @@ function (dbportal_genproc projectName siFiles)
       DEPENDS ${allFiles}
       SOURCES ${siFiles} ${allFiles}
     )
-  endif ()  
+  endif ()
   set_source_files_properties (
     ${allFiles}
     PROPERTIES GENERATED TRUE
   )
 endfunction()
+
+function (proC2c name sourceDir binaryDir)
+  set (iname  ${sourceDir}/${name}.pc)
+  set (oname  ${binaryDir}/${name}.c)
+  set (lname  ${binaryDir}/${name}.lis)
+  set (includes INCLUDE=${sourceDir})
+  foreach (arg ${ARGN})
+    list (APPEND includes INCLUDE=${arg})
+  endforeach ()
+  string (REPLACE ";" " " includes "${includes}")
+  set (command ${PROC} ${SQLCHECK} ${COMMON_PARSER} INAME=${iname} ONAME=${oname} LNAME=${lname} ${includes})
+  separate_arguments(command)
+  message (STATUS ${command})
+  add_custom_command (
+    OUTPUT ${oname}
+    COMMAND ${command}
+    DEPENDS ${iname}
+  )
+  add_custom_target (${name}_proC2c ALL
+    DEPENDS ${oname}
+    SOURCES ${iname} ${ARGN}
+  )
+  include_directories ( ${ORACLE_INCLUDE}  )
+endfunction ()
+
+function (makewsdl output sources)
+  set (switches)
+  foreach (arg ${ARGN})
+    list(APPEND switches "${arg}")
+  endforeach ()
+  message (STATUS "switches ${switches}")
+  message (STATUS "${WSDL2H} -c -o ${output} ${sources}")
+  add_custom_command (
+    OUTPUT ${output}
+    COMMAND ${WSDL2H} -c -o ${output} ${sources} ${switches}
+    DEPENDS ${sources}
+  )
+  get_filename_component (proj ${output} NAME_WE)
+  add_custom_target (${proj}_makewsdl ALL
+    DEPENDS ${output}
+    SOURCES ${sources}
+  )
+endfunction ()
+
+function (makesoap input soap_output)
+  set (switches)
+  foreach (arg ${ARGN})
+    list(APPEND switches "${arg}")
+  endforeach ()
+  foreach (file in ${soap_output})
+    get_filename_component (soap_dir ${file} PATH)
+  endforeach ()
+  message (STATUS "${SOAPCPP2} -c -C ${input} -d ${soap_dir}")
+  add_custom_command (
+    OUTPUT ${soap_output}
+    COMMAND ${SOAPCPP2} -c -C ${input} -d ${soap_dir} ${switches}
+    DEPENDS ${input}
+  )
+  get_filename_component (proj ${input} NAME_WE)
+  add_custom_target (${proj}_makesoap ALL
+    DEPENDS ${soap_output}
+    SOURCES ${input}
+  )
+endfunction ()
+
+function (gitversion)
+  set (output ${EXECUTABLE_OUTPUT_PATH}/version.txt)
+  add_custom_command (
+    OUTPUT ${output} always
+    COMMAND echo `git rev-parse --abbrev-ref HEAD`:`git rev-parse HEAD` > ${output}
+  )
+  add_custom_target (version ALL
+    DEPENDS ${output}
+  )
+endfunction ()
 
 function (jportal projectName siFiles)
   source_group ("SI Files"  REGULAR_EXPRESSION ".*[.]si$")
@@ -248,7 +323,7 @@ function (jportal projectName siFiles)
   endforeach ()
   set (sqlFiles ${sqlFiles} PARENT_SCOPE)
   add_custom_target (${projectName} ALL
-    DEPENDS ${sqlFiles} 
+    DEPENDS ${sqlFiles}
     SOURCES ${siFiles}
   )
 endfunction()
@@ -273,7 +348,7 @@ function (idl2 projectName imFile iiDir ibDir)
     VERBATIM
   )
   add_custom_target (${projectName} ALL
-    DEPENDS ${idlFile} 
+    DEPENDS ${idlFile}
     SOURCES ${imFile} ${ibFiles} ${iiFiles} ${idlFile}
   )
 endfunction()
@@ -346,8 +421,8 @@ endfunction ()
 
 function (install_file files destdir)
   file (INSTALL ${files} DESTINATION ${destdir} FILE_PERMISSIONS OWNER_WRITE OWNER_READ GROUP_READ GROUP_WRITE WORLD_READ)
-endfunction ()  
+endfunction ()
 
 function (install_exec files destdir)
   file (INSTALL ${files} DESTINATION ${destdir} FILE_PERMISSIONS OWNER_WRITE OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_WRITE GROUP_EXECUTE WORLD_READ)
-endfunction ()  
+endfunction ()

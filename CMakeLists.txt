@@ -28,6 +28,21 @@ if (LINUX)
   string (REPLACE ";" " " CMAKE_EXE_LINKER_FLAGS    ${CMAKE_EXE_LINKER_FLAGS})
   string (REPLACE ";" " " CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS})
   string (REPLACE ";" " " CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
+  # --- proC stuff
+  set (ICSDKHOME /opt/oracle/instantclient_11_2/sdk)
+  set (ICLIBHOME /opt/oracle/instantclient_11_2)
+  set (ORACLE_LIBS "clntsh")
+  set (ORACLE_LIBS_DIR "/opt/oracle/instantclient_11_2/")
+  set (PRECOMPPUBH ${ICSDKHOME}/include)
+  set (PROC ${ICSDKHOME}/proc)
+  set (SQLCHECK SQLCHECK=SEMANTICS)
+  set (COMMON_PARSER COMMON_PARSER=YES)
+  include_directories (
+    ${PRECOMPPUBH}
+    /usr/include
+  )
+  link_directories (${ICLIBHOME} ${ORACLE_LIBS_DIR})
+  link_libraries (${ORACLE_LIBS})
 elseif (MINGW)
 elseif (WIN32)
   message (STATUS "WIN32")
@@ -66,7 +81,7 @@ else ()
   set (EXEC_EXT)
 endif()
 
-file (MAKE_DIRECTORY 
+file (MAKE_DIRECTORY
   ${TOOLS_DIR}
   )
 

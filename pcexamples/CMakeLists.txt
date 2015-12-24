@@ -5,12 +5,18 @@ include(${CMAKE_SOURCE_DIR}/cmake/dbportal.cmake)
 pathed(soDir ${CMAKE_CURRENT_BINARY_DIR}/so)
 pathed(pcDir ${CMAKE_CURRENT_BINARY_DIR}/pc)
 
-set (switches 
+set (switches
   "SO|${soDir}|.so"
 )
 
-file (GLOB siFiles ${CMAKE_CURRENT_SOURCE_DIR}/si/*.si)
+set (files
+  compo
+  rewards
+)
 
-dbportal_genproc(dbportal_pcexamples "${siFiles}" ${switches})
-
-add_dependencies(dbportal_pcexamples pocioci genproc)
+foreach (name ${files})
+  set (siFile ${CMAKE_CURRENT_SOURCE_DIR}/si/${name}.si)
+  dbportal_genproc(dbportal_${name} ${siFile} ${switches})
+  add_dependencies(dbportal_${name} pocioci genproc)
+  proC2c (${name} ${CMAKE_CURRENT_BINARY_DIR}/pc ${CMAKE_CURRENT_BINARY_DIR}/pc)
+endforeach()
