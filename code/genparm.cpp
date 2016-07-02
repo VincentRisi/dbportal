@@ -104,6 +104,7 @@ const char ReservedWords[] =
               "user:"
               "userstamp:"
               "value:"
+              "version:"
               "viewonly:"
               ;
 
