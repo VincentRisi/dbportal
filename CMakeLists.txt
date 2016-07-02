@@ -66,20 +66,22 @@ set (PORTAL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code)
 
 find_package (PythonInterp)
 
-set (pocioci  ${CMAKE_BINARY_DIR}/pocioci/pocioci${EXEC_EXT})
-set (pocilink ${CMAKE_BINARY_DIR}/pocilink/pocilink${EXEC_EXT})
-set (pocidump ${CMAKE_BINARY_DIR}/pocidump/pocidump${EXEC_EXT})
-set (genproc  ${CMAKE_BINARY_DIR}/genproc/genproc${EXEC_EXT})
+if (WIN32)
+  set (EXEC_EXT ".exe")
+  set (XYZZY "debug/")
+else ()
+  set (EXEC_EXT)
+  set (XYZZY)
+endif()
+
+set (pocioci  ${CMAKE_BINARY_DIR}/pocioci/${XYZZY}pocioci${EXEC_EXT})
+set (pocilink ${CMAKE_BINARY_DIR}/pocilink/${XYZZY}pocilink${EXEC_EXT})
+set (pocidump ${CMAKE_BINARY_DIR}/pocidump/${XYZZY}pocidump${EXEC_EXT})
+set (genproc  ${CMAKE_BINARY_DIR}/genproc/${XYZZY}genproc${EXEC_EXT})
 
 include (${CMAKE_SOURCE_DIR}/cmake/dbportal.cmake)
 
 set (TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
-
-if (WIN32)
-  set (EXEC_EXT ".exe")
-else ()
-  set (EXEC_EXT)
-endif()
 
 file (MAKE_DIRECTORY
   ${TOOLS_DIR}
