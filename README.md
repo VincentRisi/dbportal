@@ -7,3 +7,8 @@ The code is written using Bison (Yacc) parser and C++. The lex token parser is h
 
 CMake is used to build the dbportal utility tools.
 There is a [common cmake](cmake/dbportal.cmake) [main](CMakeLists.txt) [pocilib](pocilib/CMakeLists.txt)
+
+### On windows
+
+In tools there is `bison-2.4.1-setup.exe`, this is 32 bit and it should work under 64 bit as well. It is best if this is installed and the execution path for bison.exe is put in. Computer/Properties/Advanced ...etc.
+
