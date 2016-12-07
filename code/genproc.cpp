@@ -14,7 +14,7 @@ static const char* ADD_TO_LIST =
 
 ARG argtab[] =
 { {'o', STRING,  (int*) &outDirName,    "Output Directory"}
-, {'f', STRING,  (int*) &inListName,    "Input file list"} 
+, {'f', STRING,  (int*) &inListName,    "Input file list"}
 };
 #define TABSIZE (sizeof(argtab) / sizeof(ARG))
 
@@ -30,7 +30,7 @@ struct AutoFILE
   {
     file = fopen(name, mode);
   }
-  ~AutoFILE() 
+  ~AutoFILE()
   {
     if (file) fclose(file);
   }
@@ -43,7 +43,7 @@ struct AutoXdir
   char* ext;
   AutoXdir(char* path)
   {
-    name = FNameName(path);    
+    name = FNameName(path);
     dir  = FNameDir(path);
     ext  = FNameExt(path);
   }
@@ -61,9 +61,7 @@ static void doStructField(FILE* ofile, PSqlField field)
   char *name = field->Name+1;
   switch (field->CType)
   {
-  case SQL_C_BINARY:
-    fprintf(ofile, "  unsigned char %s[%hu];\n", name, field->Size);
-    break;
+
   case SQL_C_CHAR:
   case SQL_C_DATE:
   case SQL_C_TIME:
@@ -87,6 +85,13 @@ static void doStructField(FILE* ofile, PSqlField field)
   case SQL_C_BIT:
     fprintf(ofile, "  char %s;\n", name);
     break;
+  case SQL_C_BINARY:
+    if (field->SqlType == SQL_OCI_IMAGE)
+      fprintf(ofile, "  struct {short int len;unsigned char data[%u];} %s;\n"
+                   , field->Size-2, name);
+    else
+      fprintf(ofile, "  unsigned char %s[%hu];\n", name, field->Size);
+    break;
   case SQL_C_CLIMAGE:
     fprintf(ofile, "  struct {short int len;unsigned char data[%u];} %s;\n"
                  , field->Size-2, name);
@@ -104,24 +109,39 @@ static void doStructField(FILE* ofile, PSqlField field)
   case SQL_C_XMLTYPE:
     fprintf(ofile, "  // SQL_C_XMLTYPE} %s;\n", name);
     break;
-  default:  
+  default:
     if (field->isBind == 0 && field->isDefine == 0)
       fprintf(ofile, "  char %s[%hu];\n", name, field->Size);
-    else  
+    else
       fprintf(ofile, "  // %04x %s;\n", (unsigned)field->CType, name);
     break;
   }
 }
 
+static bool prev_done(PSqlField fields, int f)
+{
+  int b;
+  PSqlField field = &fields[f];
+  for (b=0; b<f; b++)
+  {
+    PSqlField prev_field = &fields[b];
+    if (strcmp(field->Name+1, prev_field->Name+1) == 0)
+      return true;
+  }
+  return false;
+}
+
 static void doQueryStructs(FILE* ofile, PSqlQuery query, const char* table, bool isStd)
 {
-  int f;
+  int f,b;
   fprintf(ofile, "typedef struct\n");
   fprintf(ofile, "{\n");
   bool useInds = false;
   bool hasDynamic = false;
   for (f=0; f<query->NoFields; f++)
   {
+    if (prev_done(query->Fields, f) == true)
+      continue;
     PSqlField field = &query->Fields[f];
     if (((field->isBind|field->isDefine) & fieldIsNullable)
     &&  ((field->isBind|field->isDefine) & fieldIsNull))
@@ -140,6 +160,8 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query, const char* table, bool
     fprintf(ofile, "  {\n");
     for (f=0; f<query->NoFields; f++)
     {
+      if (prev_done(query->Fields, f) == true)
+        continue;
       PSqlField field = &query->Fields[f];
       if (((field->isBind|field->isDefine) & fieldIsNullable)
       &&  ((field->isBind|field->isDefine) & fieldIsNull))
@@ -153,45 +175,47 @@ static void doQueryStructs(FILE* ofile, PSqlQuery query, const char* table, bool
     fprintf(ofile, "} %sRec, *P%sRec;\n\n", table, table);
   else
     fprintf(ofile, "} %sRec, *P%sRec;\n\n", query->Name, query->Name);
-  if (hasDynamic == false)
-    return;
-  fprintf(ofile, "inline char* DYNAMIC(%sRec &rec, const char* name)\n{\n"
-               , query->Name
-                 );
-  for (f=0; f<query->NoFields; f++)
-  {
-    PSqlField field = &query->Fields[f];
-    if (field->isBind|field->isDefine)
-      continue;
-    fprintf(ofile, "  if ((strcmp(name, \"%s\")) == 0)\n"
-                   "    return rec.%s;\n"
-                 , field->Name+1, field->Name+1
-                 );
-  }
-  fprintf(ofile, "  return \"\";\n"
-                 "}\n\n");
+  //if (hasDynamic == false)
+  //  return;
+  //fprintf(ofile, "inline char* DYNAMIC(%sRec &rec, const char* name)\n{\n"
+  //             , query->Name
+  //               );
+  //for (f=0; f<query->NoFields; f++)
+  //{
+  //  if (prev_done(query->Fields, f) == true)
+  //    continue;
+  //  PSqlField field = &query->Fields[f];
+  //  if (field->isBind|field->isDefine)
+  //    continue;
+  //  fprintf(ofile, "  if ((strcmp(name, \"%s\")) == 0)\n"
+  //                 "    return rec.%s;\n"
+  //               , field->Name+1, field->Name+1
+  //               );
+  //}
+  //fprintf(ofile, "  return \"\";\n"
+  //               "}\n\n");
 }
 
 static bool queryIsStd(PSqlQuery query)
 {
   char *result;
-  result = strstr(query->Name, "Insert"); 
-  if (result != 0 && strlen(result) == 6) 
+  result = strstr(query->Name, "Insert");
+  if (result != 0 && strlen(result) == 6)
     return true;
-  result = strstr(query->Name, "Update"); 
-  if (result != 0 && strlen(result) == 6) 
+  result = strstr(query->Name, "Update");
+  if (result != 0 && strlen(result) == 6)
     return true;
-  result = strstr(query->Name, "SelectOne"); 
-  if (result != 0 && strlen(result) == 9) 
+  result = strstr(query->Name, "SelectOne");
+  if (result != 0 && strlen(result) == 9)
     return true;
-  result = strstr(query->Name, "SelectOneUpd"); 
-  if (result != 0 && strlen(result) == 12) 
+  result = strstr(query->Name, "SelectOneUpd");
+  if (result != 0 && strlen(result) == 12)
     return true;
-  result = strstr(query->Name, "SelectAll"); 
-  if (result != 0 && strlen(result) == 9) 
+  result = strstr(query->Name, "SelectAll");
+  if (result != 0 && strlen(result) == 9)
     return true;
-  result = strstr(query->Name, "SelectAllUpd"); 
-  if (result != 0 && strlen(result) == 12) 
+  result = strstr(query->Name, "SelectAllUpd");
+  if (result != 0 && strlen(result) == 12)
     return true;
   return false;
 }
@@ -201,10 +225,16 @@ static int doHeader(SqlSO& sqlSO, const char* inName)
   int result = COMPLETED_OK;
   char outName[1024];
   SqlSO::makeOutName(outName, sizeof(outName), inName, ".h", outDirName);
-  AutoXdir ax(outName);  
+  AutoXdir ax(outName);
   AutoFILE out(outName, "wt");
   fprintf(out.file, "#ifndef _%s_H_\n", ax.name);
   fprintf(out.file, "#define _%s_H_\n\n", ax.name);
+  fprintf(out.file, "#include <stdio.h>\n");
+  fprintf(out.file, "#include <string.h>\n");
+  fprintf(out.file, "#include <sqlca.h>\n");
+  fprintf(out.file, "#include <stdlib.h>\n");
+  fprintf(out.file, "#include <sqlda.h>\n");
+  fprintf(out.file, "#include <sqlcpr.h>\n\n");
   bool hasStd = false;
   for (int q = 0; q < sqlSO.noQueries; q++)
   {
@@ -229,9 +259,6 @@ static void doCodeField(FILE* ofile, PSqlField field)
   char *name = field->Name+1;
   switch (field->CType)
   {
-  case SQL_C_BINARY:
-    fprintf(ofile, "  unsigned char *%s = rec->%s;\n", name, name);
-    break;
   case SQL_C_CHAR:
   case SQL_C_DATE:
   case SQL_C_TIME:
@@ -255,13 +282,17 @@ static void doCodeField(FILE* ofile, PSqlField field)
   case SQL_C_BIT:
     fprintf(ofile, "  char *%s = &rec->%s;\n", name, name);
     break;
+  case SQL_C_BINARY:
+    if (field->SqlType == SQL_OCI_IMAGE)
+      fprintf(ofile, "  unsigned char *%s = (unsigned char *)&rec->%s;\n", name, name);
+    else
+      fprintf(ofile, "  unsigned char *%s = rec->%s;\n", name, name);
+    break;
   case SQL_C_CLIMAGE:
-    fprintf(ofile, "  short int *%s_len = &rec->%s.len;\n", name, name);
-    fprintf(ofile, "  unsigned char *%s_data = rec->%s.data;\n", name, name);
+      fprintf(ofile, "  unsigned char *%s = (unsigned char *)&rec->%s;\n", name, name);
     break;
   case SQL_C_BLIMAGE:
-    fprintf(ofile, "  int *%s_len = &rec->%s.len;\n", name, name);
-    fprintf(ofile, "  unsigned char *%s_data = rec->%s.data;\n", name, name);
+      fprintf(ofile, "  unsigned char *%s = (unsigned char *)&rec->%s;\n", name, name);
     break;
   case SQL_C_ZLIMAGE:
     fprintf(ofile, "  // SQL_C_ZLIMAGE} %s;\n", name);
@@ -272,7 +303,7 @@ static void doCodeField(FILE* ofile, PSqlField field)
   case SQL_C_XMLTYPE:
     fprintf(ofile, "  // SQL_C_XMLTYPE} %s;\n", name);
     break;
-  default:  
+  default:
     if (field->isBind == 0 && field->isDefine == 0)
       fprintf(ofile, "  char *%s = rec->%s;\n", name, name);
   else
@@ -294,12 +325,14 @@ static char* makeInto(char* work
   , int &used
   )
 {
-  char *p = work; 
+  char *p = work;
   int no = 0;
   bool useComma = false;
   no += sprintf(p+no, " INTO");
   for (int f=0; f < query->NoFields; f++)
   {
+    if (prev_done(query->Fields, f) == true)
+      continue;
     PSqlField field = &query->Fields[f];
     if (!field->isDefine)
       continue;
@@ -315,6 +348,8 @@ static char* makeInto(char* work
 
 static char* makeCommand(char* work
   , int worklen
+  , char *dyns
+  , int dynslen
   , PSqlQuery query
   , const char* name
   , bool useInds
@@ -323,12 +358,13 @@ static char* makeCommand(char* work
 {
   char token[256];
   char *source = query->Command;
-  char *p = work; 
-  char sp[2]; 
+  char *p = work, *d = dyns;
+  char sp[2];
   sp[0] = sp[1] = 0;
   int no, used = 0;
-  int bcount = 0;
+  int bcount = 0, begcount = 0;
   bool inSelect = false;
+  dyns[0] = 0;
   while (true)
   {
     source = SqlToken(source, token, sizeof(token));
@@ -338,20 +374,40 @@ static char* makeCommand(char* work
     {
       if (*token == '(')
         bcount++;
+      else if (stricmp(token, "begin") == 0)
+        begcount++;
       else if (*token == ')')
         bcount--;
+      else if (stricmp(token, "end") == 0)
+        begcount--;
       if (bcount < 0)
         bcount = 0;
-      if (bcount == 0) 
+      if (begcount < 0)
+        begcount = 0;
+      if (bcount == 0 && begcount == 0)
       {
         if (stricmp(token, "select") == 0)
           inSelect = true;
         else if (inSelect == true && stricmp(token, "from") == 0)
           p = makeInto(p, worklen-strlen(p), query, used);
-      }  
+      }
     }
     if (strchr(FRONT_SPACE_REMOVE, *token) != 0)
       sp[0] = 0;
+    if (stricmp(token, "select") == 0
+    ||  stricmp(token, "where")  == 0
+    ||  stricmp(token, "from")   == 0
+    ||  stricmp(token, "count")  == 0
+    ||  stricmp(token, "and")    == 0
+    ||  stricmp(token, "or")     == 0
+    ||  stricmp(token, "for")    == 0
+    ||  stricmp(token, "update") == 0)
+      strupr(token);
+    if (*token == '$')
+    {
+      d += sprintf(d, ", %s", token+1);
+      strcpy(token, "%s");
+    }
     no = sprintf(p, "%s%s", sp, token);
     used += no;
     if (strchr(BACK_SPACE_REMOVE, *token) == 0)
@@ -363,35 +419,18 @@ static char* makeCommand(char* work
   return work;
 }
 
-static void doSingle(FILE* ofile, PSqlQuery query
-  , const char *name
-  , bool useInds
-  , bool hasDynamic
-  )
+static void splitLines(FILE* ofile, const char* command, const char* leader, const char* ch)
 {
-  int f;
-  char work[8192];
   char line[80];
-  fprintf(ofile, "bool %s(P%sRec rec)\n{\n"
-               , query->Name, name
-               );
-  for (f=0; f<query->NoFields; f++)
-  {
-    PSqlField field = &query->Fields[f];
-    doCodeField(ofile, field);
-  }
-  fprintf(ofile, "  bool result = false;\n"
-                 "  EXEC SQL WHENEVER NOT FOUND GOTO not_found;\n"
-               );
-  fprintf(ofile, "  EXEC SQL");
-  makeCommand(work, sizeof(work), query, name, useInds, hasDynamic);
-  char *p = work, *r;
-  int max = 60, size = strlen(p);
-  while (size > 0) 
+  const char *p = command;
+  char *r;
+  int max = 72 - strlen(leader), size = strlen(p);
+  fprintf(ofile, "  %s", leader);
+  while (size > 0)
   {
     if (size <= max)
     {
-      fprintf(ofile, "  %s;\n", p);
+      fprintf(ofile, "  %s%s%s;\n", ch, p, ch);
       break;
     }
     strncpy(line, p, max);
@@ -399,14 +438,47 @@ static void doSingle(FILE* ofile, PSqlQuery query
     r = strrchr(line, ' ');
     if (r != 0)
       *r = 0;
-    fprintf(ofile, "  %s\n", line);
+    fprintf(ofile, "  %s%s%s\n", ch, line, ch);
     p += strlen(line);
     size = strlen(p);
     max = 72;
   }
-  fprintf(ofile, "  result = true;\n");
-  fprintf(ofile, "not_found:\n");
-  fprintf(ofile, "  return result;\n");
+}
+
+static void doSingle(FILE* ofile, PSqlQuery query
+  , const char *name
+  , bool useInds
+  , bool hasDynamic
+  )
+{
+  int f;
+  char work[8192], dyns[1024];
+  fprintf(ofile, "int %s(P%sRec rec)\n{\n"
+               , query->Name, name
+               );
+  for (f=0; f<query->NoFields; f++)
+  {
+    if (prev_done(query->Fields, f) == true)
+      continue;
+    PSqlField field = &query->Fields[f];
+    doCodeField(ofile, field);
+  }
+  fprintf(ofile, "  int result = 0;\n"
+                 "  EXEC SQL WHENEVER NOT FOUND GOTO not_found;\n"
+               );
+  makeCommand(work, sizeof(work), dyns, sizeof(dyns), query, name, useInds, hasDynamic);
+  if (hasDynamic == true)
+  {
+    splitLines(ofile, work, "const char * _immed_ = ", "\"");
+    fprintf(ofile, "  char _command[8192];\n");
+    fprintf(ofile, "  snprintf(_command, 8192, _immed%s);\n", dyns);
+    fprintf(ofile, "  EXEC SQL AT :db_name\n");
+    fprintf(ofile, "  EXECUTE IMMEDIATE :_command;\n");
+  }
+  else
+    splitLines(ofile, work, "EXEC SQL AT :db_name", "");
+  fprintf(ofile, "  result = 1;\n");
+  fprintf(ofile, "not_found:\n");  fprintf(ofile, "  return result;\n");
   fprintf(ofile, "}\n\n");
 }
 
@@ -422,22 +494,26 @@ static void doManyQuery(FILE* ofile, PSqlQuery query
                );
   for (f=0; f<query->NoFields; f++)
   {
+    if (prev_done(query->Fields, f) == true)
+      continue;
     PSqlField field = &query->Fields[f];
     if (field->isBind)
       doCodeField(ofile, field);
   }
   fprintf(ofile, "}\n\n");
-  fprintf(ofile, "bool %s_Fetch(P%sRec rec)\n{\n"
+  fprintf(ofile, "int %s_Fetch(P%sRec rec)\n{\n"
                , query->Name, name
                );
   for (f=0; f<query->NoFields; f++)
   {
+    if (prev_done(query->Fields, f) == true)
+      continue;
     PSqlField field = &query->Fields[f];
     if (field->isDefine)
       doCodeField(ofile, field);
   }
   fprintf(ofile, "  %s_Clear(rec);\n", query->Name);
-  fprintf(ofile, "  return false;\n");
+  fprintf(ofile, "  return 0;\n");
   fprintf(ofile, "}\n\n");
   fprintf(ofile, "int %s(P%sRec rec, P%sRec* recs)\n{\n"
                , query->Name, name
@@ -461,6 +537,8 @@ static void doAction(FILE* ofile, PSqlQuery query
   fprintf(ofile, "void %s(P%sRec rec)\n{\n", query->Name, name);
   for (f=0; f<query->NoFields; f++)
   {
+    if (prev_done(query->Fields, f) == true)
+      continue;
     PSqlField field = &query->Fields[f];
     doCodeField(ofile, field);
   }
@@ -479,6 +557,8 @@ static void doQueryCode(FILE* ofile, PSqlQuery query, const char* table, bool is
     name = query->Name;
   for (f=0; f<query->NoFields; f++)
   {
+    if (prev_done(query->Fields, f) == true)
+      continue;
     PSqlField field = &query->Fields[f];
     if (((field->isBind|field->isDefine) & fieldIsNullable)
     &&  ((field->isBind|field->isDefine) & fieldIsNull))
@@ -506,9 +586,6 @@ static void doFieldClear(FILE* ofile, PSqlField field)
   char *name = field->Name+1;
   switch (field->CType)
   {
-  case SQL_C_BINARY:
-    fprintf(ofile, "  rec->%s[0] = 0;\n", name);
-    break;
   case SQL_C_CHAR:
   case SQL_C_DATE:
   case SQL_C_TIME:
@@ -526,6 +603,15 @@ static void doFieldClear(FILE* ofile, PSqlField field)
   case SQL_C_BIT:
     fprintf(ofile, "  rec->%s = 0;\n", name);
     break;
+  case SQL_C_BINARY:
+    if (field->SqlType == SQL_OCI_IMAGE)
+    {
+      fprintf(ofile, "  rec->%s.len = 0;\n", name);
+      fprintf(ofile, "  rec->%s.data[0] = 0;\n", name);
+    }
+    else
+      fprintf(ofile, "  rec->%s[0] = 0;\n", name);
+    break;
   case SQL_C_CLIMAGE:
   case SQL_C_BLIMAGE:
     fprintf(ofile, "  rec->%s.len = 0;\n", name);
@@ -540,7 +626,7 @@ static void doFieldClear(FILE* ofile, PSqlField field)
   case SQL_C_XMLTYPE:
     fprintf(ofile, "  // SQL_C_XMLTYPE} %s;\n", name);
     break;
-  default:  
+  default:
     fprintf(ofile, "  // %04x %s;\n", (unsigned)field->CType, name);
     break;
   }
@@ -555,6 +641,8 @@ static void doClear(FILE* ofile, PSqlQuery query, const char* name)
   fprintf(ofile, "void %s_Clear(P%sRec rec)\n{\n", query->Name, name);
   for (f=0; f<query->NoFields; f++)
   {
+    if (prev_done(query->Fields, f) == true)
+      continue;
     PSqlField field = &query->Fields[f];
     if (field->isDefine)
       doFieldClear(ofile, field);
@@ -567,7 +655,7 @@ static int doCode(SqlSO& sqlSO, const char* inName)
   int result = COMPLETED_OK;
   char outName[1024];
   SqlSO::makeOutName(outName, sizeof(outName), inName, ".pc", outDirName);
-  AutoXdir ax(outName);  
+  AutoXdir ax(outName);
   AutoFILE out(outName, "wt");
   fprintf(out.file, "#include \"%s.h\"\n\n", ax.name);
   fprintf(out.file, "%s\n", ADD_TO_LIST);
@@ -578,9 +666,9 @@ static int doCode(SqlSO& sqlSO, const char* inName)
     if (query->isSql)
     {
       if (isStd)
-        doClear(out.file, query, sqlSO.table); 
+        doClear(out.file, query, sqlSO.table);
       else
-        doClear(out.file, query, query->Name); 
+        doClear(out.file, query, query->Name);
       doQueryCode(out.file, query, sqlSO.table, isStd);
     }
   }

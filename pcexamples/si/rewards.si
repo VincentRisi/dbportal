@@ -1,0 +1,51 @@
+server DHCB
+connect DLR/PASSWORD
+
+table Reward (null)
+
+proc ProgramsGetAccountCode
+input
+  code_environment smallint
+  code_program     smallint
+output (single)
+  acc_cd char 4
+sqlcode
+  SELECT  ACCOUNTING_CODE acc_cd
+    FROM  DLR.REWARD_PROGRAMS
+    WHERE LOYALTY_INSTANCE_NO = :code_environment
+    AND   LOYALTY_PROGRAM_NO  = :code_program
+    AND   trunc(sysdate) BETWEEN EFF_FROM AND EFF_TO
+endcode
+
+proc MatrixGetLoookupVars
+input
+  code_environment  smallint
+  code_program      smallint
+  partner_entity_no int
+output (single)
+  pay_amount        double
+  multiplier        double
+  run_date          date
+sqlcode
+  SELECT  REWARD_ATTRIBUTE_D           pay_amount
+       ,  REWARD_MULTIPLIER            multiplier
+       ,  to_char(sysdate, 'YYYYMMDD') run_date
+    FROM  DLR.REWARD_MATRIX
+    WHERE LOYALTY_INSTANCE_NO = :code_environment
+    AND   LOYALTY_PROGRAM_NO = :code_program
+    AND   PARTNER_ENTITY_NO = :partner_entity_no
+    AND   REWARD_ATTRIBUTE_A = 1
+    AND   trunc(sysdate) BETWEEN EFF_FROM AND EFF_TO
+    AND   ARCHIVE_STATE IS NULL
+endcode
+
+proc Sequences
+output (single)
+  reward_calc_seq_no   int
+  reward_rollup_seq_no int
+sqlcode
+  SELECT DLR.REWARD_CALCULATION_SEQ.nextval reward_calc_seq_no
+       , DLR.REWARD_ROLLUP_SEQ.nextval      reward_rollup_seq_no
+    FROM    DUAL
+endcode
+

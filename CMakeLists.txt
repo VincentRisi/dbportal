@@ -28,6 +28,22 @@ if (LINUX)
   string (REPLACE ";" " " CMAKE_EXE_LINKER_FLAGS    ${CMAKE_EXE_LINKER_FLAGS})
   string (REPLACE ";" " " CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS})
   string (REPLACE ";" " " CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS})
+  # --- proC stuff
+  set (ICSDKHOME /opt/oracle/instantclient_11_2/sdk)
+  set (ICLIBHOME /opt/oracle/instantclient_11_2)
+  set (ORACLE_LIBS "clntsh")
+  set (ORACLE_LIBS_DIR "/opt/oracle/instantclient_11_2/")
+  set (PRECOMPPUBH ${ICSDKHOME}/include)
+  set (PROC ${ICSDKHOME}/proc)
+  set (SQLCHECK SQLCHECK=SEMANTICS)
+  set (COMMON_PARSER COMMON_PARSER=YES)
+  include_directories (
+    ${PRECOMPPUBH}
+    /usr/include
+  )
+  link_directories (${ICLIBHOME} ${ORACLE_LIBS_DIR})
+  link_libraries (${ORACLE_LIBS})
+elseif (MINGW)
 elseif (WIN32)
   message (STATUS "WIN32")
   add_definitions (
@@ -50,22 +66,24 @@ set (PORTAL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/code)
 
 find_package (PythonInterp)
 
-set (pocioci  ${CMAKE_BINARY_DIR}/pocioci/pocioci${EXEC_EXT})
-set (pocilink ${CMAKE_BINARY_DIR}/pocilink/pocilink${EXEC_EXT})
-set (pocidump ${CMAKE_BINARY_DIR}/pocidump/pocidump${EXEC_EXT})
-set (genproc  ${CMAKE_BINARY_DIR}/genproc/genproc${EXEC_EXT})
+if (WIN32)
+  set (EXEC_EXT ".exe")
+  set (XYZZY "debug/")
+else ()
+  set (EXEC_EXT)
+  set (XYZZY)
+endif()
+
+set (pocioci  ${CMAKE_BINARY_DIR}/pocioci/${XYZZY}pocioci${EXEC_EXT})
+set (pocilink ${CMAKE_BINARY_DIR}/pocilink/${XYZZY}pocilink${EXEC_EXT})
+set (pocidump ${CMAKE_BINARY_DIR}/pocidump/${XYZZY}pocidump${EXEC_EXT})
+set (genproc  ${CMAKE_BINARY_DIR}/genproc/${XYZZY}genproc${EXEC_EXT})
 
 include (${CMAKE_SOURCE_DIR}/cmake/dbportal.cmake)
 
 set (TOOLS_DIR ${CMAKE_BINARY_DIR}/tools)
 
-if (WIN32)
-  set (EXEC_EXT ".exe")
-else ()
-  set (EXEC_EXT)
-endif()
-
-file (MAKE_DIRECTORY 
+file (MAKE_DIRECTORY
   ${TOOLS_DIR}
   )
 
@@ -77,3 +95,4 @@ add_subdirectory (pocidump)
 add_subdirectory (genproc)
 add_subdirectory (installs)
 add_subdirectory (examples)
+#add_subdirectory (pcexamples)
