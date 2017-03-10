@@ -53,10 +53,10 @@ foreach (name ${cpp_list})
   list (APPEND source ${SRC_DIR}/${name}.cpp)
 endforeach ()
 
-add_executable (pocioci ${source} ${SRC_DIR}/pocioci.cpp)
+add_executable (pocioci ${source} ${SRC_DIR}/pocimain.cpp)
 set_target_properties (pocioci PROPERTIES PROJECT_LABEL dbportal_pocioci)
 target_link_libraries (pocioci poci)
 
-add_executable (pocioci_sw ${source} ${SRC_DIR}/pocioci_sw.cpp)
+add_executable (pocioci_sw ${source} ${SRC_DIR}/pocimain_sw.cpp)
 set_target_properties (pocioci_sw PROPERTIES PROJECT_LABEL dbportal_pocioci_sw)
 target_link_libraries (pocioci_sw poci)

@@ -47,6 +47,7 @@ static bool isString(PYYField Field)
   switch (Field->Type)
   {
   case ftypeChar:
+  case ftypeHugeCHAR:
   case ftypeBinary:
   case ftypeTimeStamp:
   case ftypeUserStamp:
@@ -67,6 +68,7 @@ static const char *CSFieldType(PYYField Field, char* work)
   switch (Field->Type)
   {
   case ftypeChar:
+  case ftypeHugeCHAR:
   case ftypeBinary:
   case ftypeTimeStamp:
   case ftypeUserStamp:
