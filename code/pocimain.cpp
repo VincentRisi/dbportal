@@ -13,10 +13,12 @@
 const char* Others="";
 TBChar allOthers;
 int Help = 0;
+int ReturnZero = 0;
 const char *SwitchFile   = "";       //s
 
 static ARG argtab[] =
 { {'s', STRING,  (int*)  &SwitchFile,   "Switches file"}
+, {'z', BOOLEAN,         &ReturnZero,   "Return Zero even if errors"}
 , {'?', BOOLEAN,         &Help,         "This Help"}
 };
 #define TABSIZE (sizeof(argtab) / sizeof(ARG))
@@ -40,27 +42,28 @@ static void OutputHandler(const char *Line)
 
 static char* StripSwitch(const char* key, char* work, int worksize)
 {
-  char pk[512];strncpyz(pk, key, sizeof(pk)-1);
+  char pk[512];
+  strncpyz(pk, key, sizeof(pk)-1);
   char *oth = allOthers.data;
   char delim = oth[0];
   strlwr(pk);
   strlwr(oth);
   char* fp = strstr(oth, pk);
-  if (fp != 0 && fp > oth && fp[-1] == delim && fp[strlen(pk)] == '=')
+  if (fp == 0) return 0;
+  if (fp > oth && fp[-1] != delim) return 0;
+  if (fp[strlen(pk)] != '=') return 0;
+  fp += (strlen(pk)+1);
+  char* p2 = strchr(fp, delim);
+  if (p2 != 0 && (p2-fp) < worksize)
   {
-    fp += (strlen(pk)+1);
-    char* p2 = strchr(fp, delim);
-    if (p2 != 0 && p2-fp < worksize)
-    {
-      strncpy(work, fp, p2-fp);
-      work[p2-fp] = 0;
-      return work;
-    }
-    else if (p2 == 0 && strlen(fp) < worksize)
-    {
-      strcpy(work, fp);
-      return work;
-    }
+    strncpy(work, fp, p2-fp);
+    work[p2-fp] = 0;
+    return work;
+  }
+  else if (p2 == 0 && strlen(fp) < worksize)
+  {
+    strcpy(work, fp);
+    return work;
   }
   return 0;
 }
@@ -115,7 +118,6 @@ static void SetSwitches()
   #define OTHER_OF_2(name, def) GetOther(Table->##name, #name, def)
 #endif
   #include "switches2.h"
-
 }
 
 static int CheckBuffer(char* buffer)
@@ -139,6 +141,8 @@ static int CheckBuffer(char* buffer)
 
 int main(int argc, char *argv[])
 {
+  printf("POCIOCI: version: 170310\n");
+  printf("POCIOCI: ");
   for (int i=0; i<argc; i++) 
     printf("%s ", argv[i]); 
   printf("\n");
@@ -201,7 +205,10 @@ int main(int argc, char *argv[])
   char *Buffer = 0;
   FILE *infile = fopen(yyerrsrc, "rt");
   if (infile == 0)
+  {
+    printf("POCIOCI: %s - file does not open. Check it to see if it exists.", argv[1]);
     return 1;
+  }
   fseek(infile, 0, SEEK_END);
   long size = ftell(infile) + 1024;
   Buffer = (char*)calloc(1, size);
@@ -215,7 +222,7 @@ int main(int argc, char *argv[])
   int rc = CheckBuffer(Buffer);
   if (rc == 0)
   {
-    printf("Code Buffer for %s passes CheckBuffer\n", yyerrsrc); 
+    printf("POCIOCI: Code Buffer for %s passes CheckBuffer\n", yyerrsrc); 
     fflush(stdout);
     Table = new TYYTable;
     Table->InputFileName = strdup(yyerrsrc);
@@ -224,16 +231,18 @@ int main(int argc, char *argv[])
     rc = inbuf_parse(Table, Buffer);
     if (rc == 0) 
     {
-      printf("%s parses ok, generating\n", yyerrsrc); 
+      printf("%s(1): parses ok, generating\n", yyerrsrc); 
       fflush(stdout);
       GenerateOCI(Table);
     }
     else
     {
-      printf("%s fails yyparse\n", yyerrsrc); 
+      printf("%s(1): fails yyparse\n", yyerrsrc); 
       fflush(stdout);
     }
   }
+  if (ReturnZero == 1)
+    return 0;
   return rc;
 }
 

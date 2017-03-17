@@ -46,7 +46,6 @@ set (source
 set (cpp_list
   cleanup genarchive gencommn gencsadonet gencsidl2 gencsnet7 gencsrw genidl
   genoci genparm genpython genvbcode3 genvbforador genvbforidl genvbnet7 lex
-  pocimain
 )
 
 foreach (name ${cpp_list})

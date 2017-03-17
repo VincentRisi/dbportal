@@ -15,6 +15,7 @@
 #endif
 #include "binio.h"
 
+#define WORK_SIZE 1024
 #define US Table->UnderScore ? "_" : ""
 
 static FILE *CSIDL2File  = 0;
@@ -61,10 +62,9 @@ static bool isString(PYYField Field)
   }
   return false;
 }
-
-static const char *CSFieldType(PYYField Field, char* work)
+static const char *CSFieldType(PYYField Field, int useCSFields, char* work)
 {
-  char nwork[128], *name = NameOf(Field, nwork);
+  char nwork[WORK_SIZE], *name = NameOf(Field, nwork);
   switch (Field->Type)
   {
   case ftypeChar:
@@ -78,30 +78,53 @@ static const char *CSFieldType(PYYField Field, char* work)
   case ftypeDate:
   case ftypeDateTime:
   case ftypeImage:
-    sprintf(work, "public string %s {get{return _%s;}set{_%s=value;}}[Field(Size=%d)] string _%s;"
-                , name
-                , name
-                , name
-                , Field->Length
-                , name);
+    if (useCSFields == 1)
+      sprintf(work, "[Field(Size=%d)] public string %s;"
+                  , Field->Length
+                  , name);
+    else
+      sprintf(work, "public string %s {get{return _%s;}set{_%s=value;}}[Field(Size=%d)] string _%s;"
+                  , name
+                  , name
+                  , name
+                  , Field->Length
+                  , name);
     return work;
   case ftypeBoolean:
-    sprintf(work, "public byte %s {get{return _%s;}set{_%s=value;}} byte _%s;", name, name, name, name);
+    if (useCSFields == 1)
+      sprintf(work, "public byte %s;", name);
+    else
+      sprintf(work, "public byte %s {get{return _%s;}set{_%s=value;}} byte _%s;", name, name, name, name);
     return work;
   case ftypeTinyint:
-    sprintf(work, "public sbyte %s {get{return _%s;}set{_%s=value;}} sbyte _%s;", name, name, name, name);
+    if (useCSFields == 1)
+      sprintf(work, "public sbyte %s;", name);
+    else
+      sprintf(work, "public sbyte %s {get{return _%s;}set{_%s=value;}} sbyte _%s;", name, name, name, name);
     return work;
   case ftypeSmallint:
-    sprintf(work, "public short %s {get{return _%s;}set{_%s=value;}} short _%s;", name, name, name, name);
+    if (useCSFields == 1)
+      sprintf(work, "public short %s;", name);
+    else
+      sprintf(work, "public short %s {get{return _%s;}set{_%s=value;}} short _%s;", name, name, name, name);
     return work;
   case ftypeInt:
-    sprintf(work, "public int %s {get{return _%s;}set{_%s=value;}} int _%s;", name, name, name, name);
+    if (useCSFields == 1)
+      sprintf(work, "public int %s;", name);
+    else
+      sprintf(work, "public int %s {get{return _%s;}set{_%s=value;}} int _%s;", name, name, name, name);
     return work;
   case ftypeLong:
-    sprintf(work, "public long  %s {get{return _%s;}set{_%s=value;}} long _%s;", name, name, name, name);
+    if (useCSFields == 1)
+      sprintf(work, "public long %s;", name);
+    else
+      sprintf(work, "public long %s {get{return _%s;}set{_%s=value;}} long _%s;", name, name, name, name);
     return work;
   case ftypeFloat:
-    sprintf(work, "public double %s {get{return _%s;}set{_%s=value;}} double _%s;", name, name, name, name);
+    if (useCSFields == 1)
+      sprintf(work, "public double %s;", name);
+    else
+      sprintf(work, "public double %s {get{return _%s;}set{_%s=value;}} double _%s;", name, name, name, name);
     return work;
   }
   return "junk";
@@ -159,7 +182,7 @@ static void MakeCSName(PYYTable Table)
 static void GenerateCSTable(PYYTable Table)
 {
   int i;
-  char nwork[128], cswork[128];
+  char nwork[WORK_SIZE], cswork[WORK_SIZE];
   fprintf(CSIDL2File,
       "  [Serializable()]\n"
       "  public class %s%s%s\n"
@@ -179,7 +202,7 @@ static void GenerateCSTable(PYYTable Table)
         , Field->Filler);
     fprintf(CSIDL2File,
         "    %s\n"
-        , CSFieldType(Field, cswork)
+        , CSFieldType(Field, Table->UseCSFields, cswork)
         );
     if (Table->isNullEnabled && Field->isNull && NullableField(Field))
       fprintf(CSIDL2File,
@@ -233,7 +256,7 @@ static void CSCursorVars(const char *ProcName)
 
 static void GenerateCSKey(PYYTable Table, PYYKey Key)
 {
-  char nwork[128], cswork[128];
+  char nwork[WORK_SIZE], cswork[WORK_SIZE];
   if (Key->noFields == 0)
     return;
   int i;
@@ -256,7 +279,7 @@ static void GenerateCSKey(PYYTable Table, PYYKey Key)
         , Field->Filler);
     fprintf(CSIDL2File,
         "    %s\n",
-        CSFieldType(Field, cswork)
+        CSFieldType(Field, Table->UseCSFields, cswork)
         );
   }
   int pad;
@@ -279,7 +302,7 @@ static void GenerateCSProc(PYYTable Table, PYYProc Proc)
   if (Table->TargetCSIDL2 == 0 && (Proc->extProc & doCSIDL2) == 0)
     return;
   int i;
-  char nwork[128], cswork[128];
+  char nwork[WORK_SIZE], cswork[WORK_SIZE];
   fprintf(CSIDL2File,
       "  [Serializable()]\n"
       "  public class %s%s%s%s%s\n"
@@ -301,7 +324,7 @@ static void GenerateCSProc(PYYTable Table, PYYProc Proc)
         , Field->Filler);
     fprintf(CSIDL2File,
         "    %s\n"
-        , CSFieldType(Field, cswork)
+        , CSFieldType(Field, Table->UseCSFields, cswork)
         );
     if (Table->isNullEnabled && Field->isNull && NullableField(Field))
       fprintf(CSIDL2File,

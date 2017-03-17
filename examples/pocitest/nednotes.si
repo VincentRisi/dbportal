@@ -92,22 +92,22 @@ INPUT
    CIF_No                   char(10)
 OUTPUT (Multiple)
         Contact_Purpose_Code     char(4)
-	Product_Code            char(5)
-	System_Code             char(4)
-   	Contact_Name            char(100)
-	Contact_Tel_No          char(35)   NULL
-	Delivery_Method         char(4)
-	Delivery_Detail		char(254)
+  Product_Code            char(5)
+  System_Code             char(4)
+    Contact_Name            char(100)
+  Contact_Tel_No          char(35)   NULL
+  Delivery_Method         char(4)
+  Delivery_Detail		char(254)
         Status                   char(1)
 SQL CODE
   SELECT c.Contact_Purpose_Code,
          c.Product_Code, 
-	 c.system_code,
-	 c.Contact_Name,
-	 c.Contact_Tel_No,
-	 decode(cc.contact_code, NULL, '',cc.contact_code) as Delivery_Method,
-	 decode(cc.DETAIL, NULL, '', cc.DETAIL) as Delivery_Detail,
-	 c.Status
+   c.system_code,
+   c.Contact_Name,
+   c.Contact_Tel_No,
+   decode(cc.contact_code, NULL, '',cc.contact_code) as Delivery_Method,
+   decode(cc.DETAIL, NULL, '', cc.DETAIL) as Delivery_Detail,
+   c.Status
     FROM contact c, custcontactdetail cc
    WHERE (cc.CIF_No(+) = c.CIF_No
      AND cc.ContactSeqID(+) = c.SeqID)
@@ -119,11 +119,11 @@ ENDCODE
 PROC CheckContactInfo
 INPUT
    CIF_No					char(10)
-	Contact_Purpose_Code    char(4)
-	Contact_Name            char(100)
-	Contact_EMail_No        char(35)
+  Contact_Purpose_Code    char(4)
+  Contact_Name            char(100)
+  Contact_EMail_No        char(35)
 OUTPUT (single)
-	Status                  char(1)
+  Status                  char(1)
 SQL CODE
   SELECT c.Status
     FROM contact c, custcontactdetail cc

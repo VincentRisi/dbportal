@@ -355,7 +355,10 @@ static ushort OCIFieldType(eFieldType FT);
 static short SQLCFieldType(eFieldType FT);
 static int ApproxFieldSize(PYYField Field);
 static void MakeSQLNames(PYYTable Table);
-
+inline void print(const char* name)
+{
+  printf("Generating %s\n", name);
+}
 void GenerateOCI(PYYTable Table)
 {
   UpperName = strdup(Table->Name);
@@ -371,60 +374,58 @@ void GenerateOCI(PYYTable Table)
   strupr(UpperName);
   MakeSQLNames(Table);
   if (Table->TargetSQL)
-    GenerateSql(Table);
+  {  print("GenerateSql"),GenerateSql(Table); }
   fflush(stdout);
   if (Table->TargetVB || Table->MarkedVB)
-    GenerateVB(Table);
+  {  print("GenerateVB"), GenerateVB(Table); }
   fflush(stdout);
   if (Table->TargetVB5 || Table->MarkedVB5)
-    GenerateVB5(Table);
+  {  print("GenerateVB5"), GenerateVB5(Table); }
   fflush(stdout);
   if (Table->TargetVBCode3 || Table->MarkedVBCode3)
-    GenerateVBCode3(Table);
+  {  print("GenerateVBCode3"), GenerateVBCode3(Table); }
   fflush(stdout);
   if (Table->TargetVBNet7 || Table->MarkedVBNet7)
-    GenerateVBNet7(Table);
+  {  print("GenerateVBNet7"), GenerateVBNet7(Table); }
   fflush(stdout);
   if (Table->TargetCSNet7 || Table->MarkedCSNet7)
-    GenerateCSNet7(Table);
+  {  print("GenerateCSNet7"), GenerateCSNet7(Table); }
   fflush(stdout);
   if (Table->TargetCSAdoNet || Table->MarkedCSAdoNet)
-    GenerateCSAdoNet(Table);
+  {  print("GenerateCSADoNet"), GenerateCSAdoNet(Table); }
   fflush(stdout);
-  //if (Table->TargetCSDap || Table->MarkedCSDap)
-  //  GenerateCSDap(Table);
   if (Table->TargetCSRW || Table->MarkedCSRW)
-    GenerateCSRW(Table);
+  {  print("GenerateCSRW"), GenerateCSRW(Table); }
   fflush(stdout);
   if (Table->TargetCSIDL2 || Table->MarkedCSIDL2)
-    GenerateCSIDL2(Table);
+  {  print("GenerateCSIdl2"), GenerateCSIDL2(Table); }
   fflush(stdout);
   if (Table->TargetVBforIDL || Table->MarkedVBforIDL)
-    GenerateVBforIDL(Table);
+  {  print("GenerateVBforIDL"), GenerateVBforIDL(Table); }
   fflush(stdout);
   if (Table->TargetVBforADOR || Table->MarkedVBforADOR)
-    GenerateVBforADOR(Table);
+  {  print("GenerateVBforADOR"), GenerateVBforADOR(Table); }
   fflush(stdout);
   if (Table->TargetPAS || Table->MarkedPAS)
-    GeneratePAS(Table);
+  {  print("GeneratePAS"), GeneratePAS(Table); }
   fflush(stdout);
   if (Table->TargetPARMS)
-    GeneratePARMS(Table);
+  {  print("GeneratePARMS"), GeneratePARMS(Table); }
   fflush(stdout);
   if (Table->TargetC || Table->MarkedC)
-    GenerateHeader(Table);
+  {  print("GenerateHeader"), GenerateHeader(Table); }
   fflush(stdout);
   if (Table->TargetIDL || Table->MarkedIDL)
-    GenerateIDL(Table);
+  {  print("GenerateIDL"), GenerateIDL(Table); }
   fflush(stdout);
   if (Table->TargetPython || Table->MarkedPython)
-    GeneratePython(Table);
+  {  print("GeneratePython"), GeneratePython(Table); }
   fflush(stdout);
   if (Table->TargetSO)
-    GenerateBinary(Table);
+  {  print("GenerateBinary"), GenerateBinary(Table); }
   fflush(stdout);
   if (Table->TargetARCHIVE)
-    GenerateArchive(Table);
+  {  print("GenerateVBCode3"), GenerateArchive(Table); }
   fflush(stdout);
   free(UpperName);
   free(ControlName);

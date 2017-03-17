@@ -242,9 +242,18 @@ int main(int argc, char *argv[])
   Table->InputFileName = strdup(yyerrsrc);
   SetSwitches();
   yyhandler = OutputHandler;
-  int rc = yyparse(Table, Buffer);
-  if (rc == 0)
+  int rc = inbuf_parse(Table, Buffer);
+  if (rc == 0) 
+  {
+    printf("%s parses ok, generating\n", yyerrsrc); 
+    fflush(stdout);
     GenerateOCI(Table);
+  }
+  else
+  {
+    printf("%s fails yyparse\n", yyerrsrc); 
+    fflush(stdout);
+  }
   return rc;
 }
 
