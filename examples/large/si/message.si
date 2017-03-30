@@ -14,7 +14,7 @@ TABLE Message (null)
   Fred        float(10,4) null
   Fred2       float(16,6)
   USId        char(16)
-  TMStamp     timestamp
+  TMStamp     timestamp (6)
 
 GRANT DELETE TO PUBLIC
 GRANT INSERT TO PUBLIC

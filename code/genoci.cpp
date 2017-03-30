@@ -2012,7 +2012,7 @@ static void GenerateBinSql(PYYTable Table, PYYProc Proc)
 
 static const char *SqlFieldType(PYYField Field)
 {
-  static char work[20];
+  static char work[512];
   switch (Field->Type)
   {
   case ftypeChar:
@@ -2032,6 +2032,11 @@ static const char *SqlFieldType(PYYField Field)
   case ftypeDateTime:
     return "date";
   case ftypeTimeStamp:
+    if (Field->Scale > 0)
+    {
+      sprintf(work, "timestamp (%hu)", Field->Scale);
+      return work;
+    }
     return "date";
   case ftypeBoolean:
     return "number(1)";
