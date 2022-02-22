@@ -1,0 +1,136 @@
+SERVER @dn21
+CONNECT ntsd00/control
+
+Table NN      #   - spurious name
+
+# Used By: mqservices Nednotes
+
+# Get CIF No using HoganCisNo
+PROC GetCIFNoByHOGANCISNo
+INPUT
+  HOGANCISNo   char(16)
+OUTPUT (SINGLE)  
+  CIF_No         char(10)
+SQL CODE  
+  SELECT CIF_No 
+    FROM Customer
+    WHERE HOGAN_CIS_No = :HOGANCISNo 
+ENDCODE
+# A.Faught 07/02/2017
+# This query gets all the settlement Accounts per CIFNo
+PROC GetSettlementAccounts
+INPUT
+  CIF_No                    char(10)
+OUTPUT (Multiple)
+  Account_No                char(20)
+  SWIFT_ID                  char(12)
+  Acc_Seq_No                int   
+  AccType_Code              char(4)
+  Branch_Code               char(10)
+  Branch_Clearing_No        char(20) 
+  CCYCode                   char(10)
+  Acc_Full_Name             char(50)
+  Acc_Short_Name            char(30)
+  Tax_Status_Code           char(4)      
+  Acc_Status_Code           char(4)   
+  Residency_Ind             char(1)
+  Main_Acc_Ind              char(1)
+  Acc_Desc                  char(50)
+  Version_No                int
+  Status                    char(1)
+  UserId                    USERSTAMP
+  TMstamp                   TIMESTAMP
+  SourceId                  int 
+SQL CODE
+  SELECT 
+     Account_No, 
+     SWIFT_ID, 
+     Acc_Seq_No, 
+     AccType_Code,
+     Branch_Code,
+     Branch_Clearing_No, 
+     CCYCode, 
+     Acc_Full_Name, 
+     Acc_Short_Name,
+     Tax_Status_Code, 
+     Acc_Status_Code, 
+     Residency_Ind, 
+     Main_Acc_Ind,
+     Acc_Desc, 
+     Version_No, 
+     Status, 
+     UserId, 
+     to_char(TMstamp, 'YYYYMMDDHH24MISS'),
+     SourceId
+  FROM Account
+  WHERE CIF_No = :CIF_No
+  AND Acc_Status_Code = 'OPEN'
+  AND AccType_Code = 'CUAC';
+ENDCODE
+
+# A.Faught 07/02/2017
+# This query gets the account status
+PROC GetSettlementAccountStatus
+INPUT
+  CIF_No                    char(10)
+  Account_No                char(20)  
+  Branch_Clearing_No        char(20)   
+OUTPUT (Single)
+  Acc_Status_Code           char(4)   
+SQL CODE
+  SELECT Acc_Status_Code
+  FROM Account
+  WHERE CIF_No = :CIF_No
+  AND Account_No = :Account_No
+  AND Branch_Clearing_No = :Branch_Clearing_No
+  AND AccType_Code = 'CUAC';  
+ENDCODE
+# A.Faught 08/02/2017
+# This query gets all the Contact People information per CIFNo
+PROC GetContactInfo
+INPUT
+   CIF_No                   char(10)
+OUTPUT (Multiple)
+        Contact_Purpose_Code     char(4)
+  Product_Code            char(5)
+  System_Code             char(4)
+    Contact_Name            char(100)
+  Contact_Tel_No          char(35)   NULL
+  Delivery_Method         char(4)
+  Delivery_Detail		char(254)
+        Status                   char(1)
+SQL CODE
+  SELECT c.Contact_Purpose_Code,
+         c.Product_Code, 
+   c.system_code,
+   c.Contact_Name,
+   c.Contact_Tel_No,
+   decode(cc.contact_code, NULL, '',cc.contact_code) as Delivery_Method,
+   decode(cc.DETAIL, NULL, '', cc.DETAIL) as Delivery_Detail,
+   c.Status
+    FROM contact c, custcontactdetail cc
+   WHERE (cc.CIF_No(+) = c.CIF_No
+     AND cc.ContactSeqID(+) = c.SeqID)
+     AND c.CIF_No = :CIF_No;
+ENDCODE
+
+# G.Meira 13/02/2017
+# This query checks if contact details are correct
+PROC CheckContactInfo
+INPUT
+   CIF_No					char(10)
+  Contact_Purpose_Code    char(4)
+  Contact_Name            char(100)
+  Contact_EMail_No        char(35)
+OUTPUT (single)
+  Status                  char(1)
+SQL CODE
+  SELECT c.Status
+    FROM contact c, custcontactdetail cc
+   WHERE (cc.CIF_No(+) = c.CIF_No
+     AND cc.ContactSeqID(+) = c.SeqID)
+     AND c.CIF_No = :CIF_No
+     AND c.Contact_Purpose_Code = :Contact_Purpose_Code
+     AND c.Contact_Name = :Contact_Name
+     AND cc.DETAIL = :Contact_EMail_No;
+ENDCODE

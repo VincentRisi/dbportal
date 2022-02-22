@@ -39,10 +39,38 @@ typedef struct
    #define atoint64 _atoi64
    #define _strupr strupr
    #define _strlwr strlwr
-
-/* -------------------------- Windows NT and MS VC++-------------------- */
 #elif defined(__MSVC__) || _MSC_VER >= 1200
-   //typedef __int8 uint8;
+  #if _MSC_VER >= 1500
+    #define _CRT_NONSTDC_NO_WARNINGS
+    #define _WINSOCK_DEPRECATED_NO_WARNINGS
+  #elif _MSC_VER >= 1400
+    #define _CRT_NONSTDC_NO_WARNINGS
+   #define _WINSOCK_DEPRECATED_NO_WARNINGS
+  #elif _MSC_VER >= 1300
+    #define access    _access
+    #define unlink    _unlink 
+    #define snprintf  _snprintf
+    #define vsnprintf _vsnprintf
+    #define strdup    _strdup
+    #define strupr    _strupr
+    #define strlwr    _strlwr
+    #define tempnam   _tempnam
+  #else
+    #define access    _access
+    #define unlink    _unlink 
+    #define snprintf  _snprintf
+    #define vsnprintf _vsnprintf
+    #define strdup    _strdup
+    #define strupr    _strupr
+    #define strlwr    _strlwr
+    #define tempnam   _tempnam
+  #endif
+  #ifndef _WINDOWS
+    #define _WINDOWS
+  #endif
+  #ifndef M_STDLIB
+    #define M_STDLIB
+  #endif
    #ifndef _WINDOWS
       #define _WINDOWS
    #endif
@@ -57,14 +85,6 @@ typedef struct
    #define APC
    #include <winsock2.h>
 
-   #define access    _access
-   #define unlink    _unlink 
-   #define snprintf  _snprintf
-   #define vsnprintf _vsnprintf
-   #define strdup    _strdup
-   #define strupr    _strupr
-   #define strlwr    _strlwr
-   #define tempnam   _tempnam
 
    typedef __int8  int8;
    typedef __int16 int16;

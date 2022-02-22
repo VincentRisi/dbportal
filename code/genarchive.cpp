@@ -109,7 +109,7 @@ const char ReservedWords[] =
 
 static char *CheckReserved(char *result, char *name)
 {
-  char Work[256];
+  char Work[512];
   result[0] = 0;
   sprintf(Work, ":%s:", name);
   strlwr(Work);
@@ -122,7 +122,7 @@ static char *CheckReserved(char *result, char *name)
 
 static char *NameOf(char *result, PYYField Field)
 {
-  char CheckWork[256];
+  char CheckWork[512];
   result[0] = 0;
   strcat(result, CheckReserved(CheckWork, Field->Name));
   if (Field->Alias != 0)
@@ -183,8 +183,8 @@ static char *TypeOf(char *result, PYYField Field)
     strcpy(result, "float");
     break;
   }
-  char Work[256];
-  char CheckWork[256];
+  char Work[512];
+  char CheckWork[512];
   if (Field->noConsts > 0)
   {
     strcat(result, " ");
@@ -215,7 +215,7 @@ static int CountOf(PYYTable Table)
 static void GenKey(PYYKey Key)
 {
   int i;
-  char CheckWork[256];
+  char CheckWork[512];
   fprintf(ArchiveFile, "KEY %s", Key->Name);
   for (i=0; i<Key->noFields; i++)
   {
@@ -245,8 +245,8 @@ static void GenKeys(PYYTable Table)
 static void GenTable(PYYTable Table)
 {
   int i;
-  char NameWork[256];
-  char CheckWork[256];
+  char NameWork[512];
+  char CheckWork[512];
   fprintf(ArchiveFile, "// TABLE %s\n", CheckReserved(CheckWork, Table->Name));
   fprintf(ArchiveFile, "\"SELECT '<%s'\"\n", CheckReserved(CheckWork, Table->Name));
   for (i=0; i<Table->noFields; i++)

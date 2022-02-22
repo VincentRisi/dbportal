@@ -718,13 +718,13 @@ FieldType
 {
   SetFieldType(ftypeDate, 0);
 }
-| sqldefTIMESTAMP
+| sqldefTIMESTAMP OptNumber
 {
-  SetFieldType(ftypeTimeStamp, 0);
+  SetFieldType(ftypeTimeStamp, $2);
 }
-| sqldefUSERSTAMP
+| sqldefUSERSTAMP OptNumber
 {
-  SetFieldType(ftypeUserStamp, 0);
+  SetFieldType(ftypeUserStamp, $2);
 }
 | sqldefSEQUENCE
 {
@@ -1740,7 +1740,7 @@ static void AddRowStatus(void)
 static void AddRowUpdated(void)
 {
   memset(&Field, 0, sizeof(TYYField));
-  SetFieldType(ftypeTimeStamp, 0);
+  SetFieldType(ftypeTimeStamp, 6);
   AddTableField(strdup("RowUpdated"));
 }
 
@@ -2034,7 +2034,7 @@ static void SetFieldType(eFieldType Type, int Length)
     Field.Precision = 8;
     break;
   case ftypeTimeStamp:
-    Field.Scale = 0;
+    Field.Scale = Length;
     Field.Length = 15;
     Field.Precision = 14;
     break;
@@ -2045,8 +2045,16 @@ static void SetFieldType(eFieldType Type, int Length)
     break;
   case ftypeUserStamp:
     Field.Scale = 0;
-    Field.Length = 9;
-    Field.Precision = 8;
+    if (Length == 0)
+    {
+      Field.Length = 9;
+      Field.Precision = 8;
+    }
+    else
+    {
+      Field.Length = Length + 1;
+      Field.Precision = Length;
+    }
     break;
   case ftypeBoolean:
     Field.Scale = 0;

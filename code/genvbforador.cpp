@@ -15,6 +15,7 @@
 #endif
 #include "binio.h"
 
+#define WORK_SIZE 1024
 #define US Table->UnderScore ? "_" : ""
 
 static FILE *VBforADORFile = 0;
@@ -117,7 +118,7 @@ static const char *TypeOf(PYYField Field, char *work)
 
 static void GenerateMake(const char *Name, int noFields, PYYField Fields)
 {
-  char nwork[128], twork[128];
+  char nwork[WORK_SIZE], twork[WORK_SIZE];
   fprintf(VBforADORFile, "#If Recordset Then\n\n");
   fprintf(VBforADORFile, "Sub Make%sRS(RS As Recordset)\n", Name);
   fprintf(VBforADORFile, "  Set RS = New Recordset\n");
@@ -132,7 +133,7 @@ static void GenerateMake(const char *Name, int noFields, PYYField Fields)
 
 static void GenerateInput(const char *Name, int noFields, PYYField Fields)
 {
-  char nwork1[128], nwork2[128];
+  char nwork1[WORK_SIZE], nwork2[WORK_SIZE];
   fprintf(VBforADORFile, "Sub Input%sRS(RS As Recordset, Bytes() As Byte)\n", Name);
   fprintf(VBforADORFile, "  Dim I As Long\n"
                          "  Dim Rec As t%s\n", Name);
@@ -156,7 +157,7 @@ static void GenerateInput(const char *Name, int noFields, PYYField Fields)
 
 static void GenerateOutput(const char *Name, int noFields, PYYField Fields)
 {
-  char nwork1[128], nwork2[128];
+  char nwork1[WORK_SIZE], nwork2[WORK_SIZE];
   fprintf(VBforADORFile, "Sub Output%sRS(Bytes() As Byte, RS As Recordset)\n", Name);
   fprintf(VBforADORFile, "  Dim I As Long\n"
                          "  Dim Rec As t%s\n", Name);
@@ -209,7 +210,7 @@ static void GenerateVBKey(PYYTable Table, PYYKey Key)
 {
   if (Key->noFields == 0)
     return;
-  char Name[256], nwork[256];
+  char Name[WORK_SIZE], nwork[WORK_SIZE];
   sprintf(Name, "%sKey", Dehash(Table->Name, nwork));
   GenerateMake(Name, Key->noFields, Key->Fields);
   GenerateInput(Name, Key->noFields, Key->Fields);
@@ -224,7 +225,7 @@ static void GenerateVBProc(PYYTable Table, PYYProc Proc)
     return;
   if (Table->TargetVBforADOR == 0 && (Proc->extProc & doVBFORADOR) == 0)
     return;
-  char Name[256], nwork[256];
+  char Name[WORK_SIZE], nwork[WORK_SIZE];
   sprintf(Name, "%s%s", Dehash(Table->Name, nwork), Proc->Name);
   GenerateMake(Name, Proc->noFields, Proc->Fields);
   GenerateInput(Name, Proc->noFields, Proc->Fields);
@@ -259,5 +260,3 @@ void GenerateVBforADOR(PYYTable Table)
   StaticGenerateVB(Table);
   fclose(VBforADORFile);
 }
-
-

@@ -36,6 +36,7 @@ OTHER_OF_0(ViewOnly);
 OTHER_OF_2(ExtendedC, 1);
 OTHER_OF_2(LittleTrue, 1);
 OTHER_OF_2(Version2Bin, 1);
+OTHER_OF_2(UseCSFields, 0);
 
 OTHER_OF_2(SqlAuditExt, ".aud");
 OTHER_OF_2(SqlConExt, ".con");
@@ -72,7 +73,7 @@ OTHER_OF_2(CSRWExt, ".cs");
 
 OTHER_OF_0(TargetIDL);
 OTHER_OF_0(IDLDir);
-OTHER_OF_2(IDLExt, "*.ii");
+OTHER_OF_2(IDLExt, ".ii");
 
 OTHER_OF_0(TargetPARMS);
 OTHER_OF_0(PARMSDir);

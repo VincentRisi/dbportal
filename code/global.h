@@ -430,6 +430,7 @@ struct TYYTable
   int      Internal;
   int      Version2Bin;
   int      UseUsedBy;
+  int      UseCSFields;
   int      OneSQLScript;
   int      TargetSQL;
   int      TargetSO;
@@ -447,7 +448,6 @@ struct TYYTable
   int      TargetCSIDL2;
   int      LittleTCSIDL2;
   int      TargetCSAdoNet;
-  //int      TargetCSDap;
   int      TargetCSRW;
   int      TargetVBforIDL;
   int      TargetVBforADOR;
